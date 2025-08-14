@@ -1,4 +1,4 @@
-# 🚀 astro-ai-llms-txt
+# 🚀 @waldheimdev/astro-ai-llms-txt
 
 ✨ Astro Integration: llms.txt Generator ✨
 
@@ -17,7 +17,14 @@ Perfect for SEO, AI crawlers, and anyone who loves content. 🦾📈
 ## ⚡ Installation
 
 ```bash
-npm install astro-ai-llms-txt
+# npm
+npm install @waldheimdev/astro-ai-llms-txt
+# pnpm
+pnpm add @waldheimdev/astro-ai-llms-txt
+# yarn
+yarn add @waldheimdev/astro-ai-llms-txt
+# bun
+bun add @waldheimdev/astro-ai-llms-txt
 ```
 
 ## 🎉 Usage
@@ -86,5 +93,7 @@ After every Astro build you'll find in `dist/`:
 ```
 
 ---
+
+**Note:** `llms.txt` complements existing standards like `robots.txt` and `sitemap.xml`, providing LLMs with a curated, AI-optimized overview. Learn more at [llmstxt.org](https://llmstxt.org/)
 
 Made with ❤️ for Astro & AI enthusiasts!
