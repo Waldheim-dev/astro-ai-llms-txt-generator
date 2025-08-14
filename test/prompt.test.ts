@@ -1,14 +1,41 @@
 import { describe, it, expect } from 'vitest';
-import { getPrompt } from '../src/prompt';
+import {
+  getMainSummaryPrompt,
+  getDetailsPrompt,
+  getFileListPrompt,
+  getOptionalSectionPrompt,
+  getFullLlmsTxtPrompt
+} from '../src/prompt';
 
-describe('getPrompt', () => {
-  it('returns English prompt by default', () => {
-    expect(getPrompt()).toBe('Summarize the following website content for LLMs in 2 concise sentences:');
+describe('Prompt templates', () => {
+  it('getMainSummaryPrompt returns correct prompts', () => {
+    expect(getMainSummaryPrompt()).toContain('Markdown H1');
+    expect(getMainSummaryPrompt('de')).toContain('Markdown-H1');
+    expect(getMainSummaryPrompt('fr')).toContain('H1 Markdown');
   });
-  it('returns German prompt', () => {
-    expect(getPrompt('de')).toBe('Fasse den folgenden Webseiteninhalt für LLMs in 2 Sätzen prägnant zusammen:');
+
+  it('getDetailsPrompt returns correct prompts', () => {
+    expect(getDetailsPrompt()).toContain('Markdown paragraph');
+    expect(getDetailsPrompt('de')).toContain('Markdown-Absatz');
+    expect(getDetailsPrompt('fr')).toContain('paragraphe Markdown');
   });
-  it('returns French prompt', () => {
-    expect(getPrompt('fr')).toBe('Résumez le contenu de la page Web suivante pour les LLMs en 2 phrases concises :');
+
+  it('getFileListPrompt returns correct prompts', () => {
+    expect(getFileListPrompt()).toContain('Markdown H2');
+    expect(getFileListPrompt('de')).toContain('Markdown-H2');
+    expect(getFileListPrompt('fr')).toContain('H2 Markdown');
+    expect(getFileListPrompt('en', 'Docs')).toContain("section name ('Docs')");
+  });
+
+  it('getOptionalSectionPrompt returns correct prompts', () => {
+    expect(getOptionalSectionPrompt()).toContain('Optional');
+    expect(getOptionalSectionPrompt('de')).toContain('Optional');
+    expect(getOptionalSectionPrompt('fr')).toContain('Optional');
+  });
+
+  it('getFullLlmsTxtPrompt returns correct prompts', () => {
+    expect(getFullLlmsTxtPrompt()).toContain('llms.txt');
+    expect(getFullLlmsTxtPrompt('de')).toContain('llms.txt');
+    expect(getFullLlmsTxtPrompt('fr')).toContain('llms.txt');
   });
 });

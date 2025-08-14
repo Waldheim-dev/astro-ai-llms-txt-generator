@@ -1,5 +1,10 @@
 import type { LlmsTxtOptions } from './types';
-import { getPrompt } from './prompt';
+import {
+  getMainSummaryPrompt,
+  getDetailsPrompt,
+  getFileListPrompt,
+  getFullLlmsTxtPrompt,
+} from './prompt';
 import { AISummaryOptions, generateAISummary } from './aiProvider';
 import { extractMetaContent, extractTagText } from './extractHtml';
 import fs from 'fs';
@@ -47,7 +52,15 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         const cacheDir = path.join(resolvedDistPath, '.llms-txt-cache');
         if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
         const baseUrl = site ? site.replace(/\/$/, '') : '';
-        const aiPrompt = getPrompt(language);
+        // Prompt für Hauptbeschreibung (H1 + Blockquote)
+        const mainPrompt = getMainSummaryPrompt(language);
+        // Prompt für Detailabschnitt
+        const detailsPrompt = getDetailsPrompt(language);
+        // Prompt für File-List-Sektion
+        const fileListPrompt = getFileListPrompt(language);
+        // Prompt für Optional-Sektion
+        // Fallback für komplette llms.txt
+        const fullPrompt = getFullLlmsTxtPrompt(language);
         const pageInfos = await Promise.all(
           htmlFiles.map(async (file: string) => {
             const html = fs.readFileSync(file, 'utf-8');
@@ -74,6 +87,13 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
             const kiInputShort =
               kiInput.length > maxInputLength ? kiInput.slice(0, maxInputLength) : kiInput;
             const debug = options.debug || false;
+
+            // Prompt-Auswahl je nach Abschnitt
+            let promptToUse = fullPrompt;
+            if (title || h1) promptToUse = mainPrompt;
+            else if (h2s || h3s) promptToUse = fileListPrompt;
+            else if (allPs) promptToUse = detailsPrompt;
+
             let summary = metaDescription || extractTagText(html, 'p');
             if (aiProvider && summary) {
               try {
@@ -82,7 +102,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
                   provider: aiProvider,
                   apiKey: aiApiKey,
                   model: aiModel,
-                  prompt: aiPrompt,
+                  prompt: promptToUse,
                   text: kiInputShort,
                   aiUrl,
                   cacheDir,
