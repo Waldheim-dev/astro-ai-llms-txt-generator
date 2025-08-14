@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.llms-txt-cache/
+.env
+test-runner-profile
+coverage/
+*.tgz

@@ -1,0 +1,55 @@
+stages:
+  - test
+  - build
+  - release
+
+variables:
+  NODE_ENV: production
+
+image: node:22
+
+cache:
+  paths:
+    - node_modules/
+
+before_script:
+  - npm ci
+
+lint:
+  stage: test
+  script:
+    - npm run lint
+
+test:
+  stage: test
+  script:
+    - npm run test
+  coverage: /All files[^|]*|[^|]*\s+([\d\.]+)/
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+
+build:
+  stage: build
+  script:
+    - npm run build
+  needs:
+    - test
+    - lint
+  artifacts:
+    paths:
+      - dist/
+
+release:
+  stage: release
+  script:
+    - npx semantic-release
+  needs:
+    - build
+  artifacts:
+    paths:
+      - dist/
+  only:
+    - main

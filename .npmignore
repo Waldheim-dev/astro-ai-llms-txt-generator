@@ -1,0 +1,4 @@
+test/
+.llms-txt-cache/
+*.log
+src/
