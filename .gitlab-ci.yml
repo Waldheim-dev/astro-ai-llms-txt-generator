@@ -12,8 +12,10 @@ cache:
   paths:
     - node_modules/
 
-before_script:
-  - npm ci
+install:
+  stage: '.pre'
+  script:
+    - npm ci
 
 lint:
   stage: test
@@ -26,6 +28,7 @@ test:
     - npm run test
   coverage: /All files[^|]*|[^|]*\s+([\d\.]+)/
   artifacts:
+    expire_in: "30 days"
     reports:
       coverage_report:
         coverage_format: cobertura
@@ -39,6 +42,7 @@ build:
     - test
     - lint
   artifacts:
+    expire_in: "30 days"
     paths:
       - dist/
 
@@ -49,6 +53,7 @@ release:
   needs:
     - build
   artifacts:
+    expire_in: "30 days"
     paths:
       - dist/
   only:

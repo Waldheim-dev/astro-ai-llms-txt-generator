@@ -65,6 +65,7 @@
   "dependencies": {
     "@google/genai": "^1.14.0",
     "cheerio": "^1.1.2",
+    "fast-glob": "^3.3.3",
     "ollama": "^0.5.17",
     "openai": "^5.12.2"
   }
