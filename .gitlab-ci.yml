@@ -3,9 +3,6 @@ stages:
   - build
   - release
 
-variables:
-  NODE_ENV: production
-
 image: node:22
 
 cache:
