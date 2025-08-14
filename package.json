@@ -1,5 +1,5 @@
 {
-  "name": "astro-ai-llms-txt",
+  "name": "@waldheimdev/astro-ai-llms-txt",
   "version": "1.0.0",
   "description": "Astro Integration: llms.txt Generator (KI-optimierte Zusammenfassung aller HTML-Seiten)",
   "main": "dist/index.js",
