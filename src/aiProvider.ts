@@ -3,16 +3,10 @@ import path from 'path';
 import ollama from 'ollama';
 import OpenAI from 'openai';
 import { GoogleGenAI } from '@google/genai';
-
-export interface Logger {
-  debug: (...args: unknown[]) => void;
-  info: (...args: unknown[]) => void;
-  warn: (...args: unknown[]) => void;
-  error: (...args: unknown[]) => void;
-}
+import crypto from 'crypto';
 
 export interface AISummaryOptions {
-  logger: Logger;
+  logger;
   provider: string;
   apiKey: string;
   model: string;
@@ -30,6 +24,7 @@ export interface AISummaryOptions {
  * @param params.model Model name
  * @param params.prompt Prompt for the summary
  * @param params.text Text to summarize
+ * @param params.logger Logger instance
  * @returns Summary string
  */
 export async function getOpenAISummary({
@@ -37,13 +32,20 @@ export async function getOpenAISummary({
   model,
   prompt,
   text,
+  logger,
 }: {
   apiKey: string;
   model: string;
   prompt: string;
   text: string;
+  logger;
 }): Promise<string> {
   try {
+    logger.debug(`[OPENAI-DEBUG] Using OpenAI API with model: ${model || 'gpt-4o'}`);
+    logger.debug(`[OPENAI-DEBUG] Prompt: ${prompt}`);
+    logger.debug(
+      `[OPENAI-DEBUG] Input (first part): ${text.substring(0, 500)}... (Length: ${text.length})`
+    );
     const client = new OpenAI({ apiKey });
     const completion = await client.responses.create({
       model: model || 'gpt-4o',
@@ -51,6 +53,7 @@ export async function getOpenAISummary({
       input: text,
       temperature: 0.5,
     });
+    logger.debug(`[OPENAI-DEBUG] RAW response: ${JSON.stringify(completion)}`);
     return completion.output_text?.trim() || '';
   } catch {
     return '';
@@ -64,6 +67,7 @@ export async function getOpenAISummary({
  * @param params.model Model name
  * @param params.prompt Prompt for the summary
  * @param params.text Text to summarize
+ * @param params.logger Logger instance
  * @returns Summary string
  */
 export async function getGeminiSummary({
@@ -71,18 +75,28 @@ export async function getGeminiSummary({
   model,
   prompt,
   text,
+  logger,
 }: {
   apiKey: string;
   model: string;
   prompt: string;
   text: string;
+  logger;
 }): Promise<string> {
   try {
+    logger.debug(
+      `[GENAI-DEBUG] Using Google Gemini API with model: ${model || 'gemini-2.5-flash-light'}`
+    );
+    logger.debug(`[GENAI-DEBUG] Prompt: ${prompt}`);
+    logger.debug(
+      `[GENAI-DEBUG] Input (first part): ${text.substring(0, 500)}... (Length: ${text.length})`
+    );
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: model || 'gemini-2.5-flash-light',
       contents: `${prompt}\n${text}`,
     });
+    logger.debug(`[GENAI-DEBUG] RAW response: ${JSON.stringify(response)}`);
     return response.text?.trim() || '';
   } catch {
     return '';
@@ -107,7 +121,7 @@ export async function getOllamaSummary({
   model: string;
   prompt: string;
   text: string;
-  logger: Logger;
+  logger;
 }): Promise<string> {
   const maxRetries = 5;
   const delayMs = 2000;
@@ -170,14 +184,24 @@ export async function getOllamaSummary({
  * @returns AI summary as string (Promise)
  */
 export async function generateAISummary(options: AISummaryOptions): Promise<string> {
-  const { logger, provider, apiKey, model, prompt, text, cacheDir } = options;
+  const { logger, provider, apiKey, model, prompt, text, cacheDir, debug } = options;
+  // Fallback-Logger für Debug-Ausgaben
+  function debugLog(...args: unknown[]) {
+    if (!logger && typeof logger.debug !== 'function' && debug) {
+      // Schreibe Debug-Ausgaben immer auf die Konsole, unabhängig vom Astro-Logger
+      console.debug('[LLMS-TXT-DEBUG]', ...args);
+      return;
+    }
+    if (logger && typeof logger.debug === 'function') {
+      logger.debug(...args);
+    }
+  }
   if (!provider || (provider !== 'ollama' && !apiKey)) {
     logger.warn(
       '[DEBUG] No AI provider specified or API key missing! No AI summary will be generated.'
     );
     return '';
   }
-  const crypto = await import('crypto');
   const hash = crypto
     .createHash('sha256')
     .update([provider, model, prompt, text].join('||'))
@@ -189,7 +213,7 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
       try {
         const cached = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
         if (cached && typeof cached.summary === 'string') {
-          logger.info(`AI cache hit for hash ${hash}`);
+          logger.debug(`AI cache hit for hash ${hash}`);
           return cached.summary;
         }
       } catch (e) {
@@ -202,11 +226,23 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
   async function getProviderSummary(): Promise<string> {
     switch (provider) {
       case 'openai':
-        return getOpenAISummary({ apiKey, model, prompt, text });
+        return getOpenAISummary({
+          apiKey,
+          model,
+          prompt,
+          text,
+          logger: { ...logger, debug: debugLog },
+        });
       case 'gemini':
-        return getGeminiSummary({ apiKey, model, prompt, text });
+        return getGeminiSummary({
+          apiKey,
+          model,
+          prompt,
+          text,
+          logger: { ...logger, debug: debugLog },
+        });
       case 'ollama':
-        return getOllamaSummary({ model, prompt, text, logger });
+        return getOllamaSummary({ model, prompt, text, logger: { ...logger, debug: debugLog } });
       default:
         logger.warn('Unknown provider.');
         return '';
@@ -221,7 +257,7 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
   if (cacheDir && summary) {
     try {
       fs.writeFileSync(cachePath, JSON.stringify({ summary }), 'utf-8');
-      logger.info(`AI response cached at ${cachePath}`);
+      logger.debug(`AI response cached at ${cachePath}`);
     } catch (e) {
       logger.warn(`Error writing AI cache: ${e instanceof Error ? e.message : String(e)}`);
     }

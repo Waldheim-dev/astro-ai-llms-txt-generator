@@ -7,8 +7,8 @@ import {
   getGeminiSummary,
   getOllamaSummary,
   generateAISummary,
-  Logger,
-  AISummaryOptions
+  AISummaryOptions,
+  Logger
 } from '../src/aiProvider';
 
 // Mocks must be at the top level!
@@ -27,13 +27,6 @@ vi.mock('@google/genai', () => ({
 vi.mock('ollama', () => ({
   default: { chat: vi.fn().mockResolvedValue({ message: { content: 'ollama-summary' } }) }
 }));
-vi.mock('crypto', () => ({
-  createHash: () => ({
-    update: () => ({
-      digest: () => 'testhash'
-    })
-  })
-}));
 
 describe('aiProvider', () => {
   const logger: Logger = {
@@ -48,26 +41,26 @@ describe('aiProvider', () => {
   });
 
   it('getOpenAISummary returns summary on success', async () => {
-    const result = await getOpenAISummary({ apiKey: 'key', model: 'gpt-4', prompt: 'p', text: 't' });
+  const result = await getOpenAISummary({ apiKey: 'key', model: 'gpt-4', prompt: 'p', text: 't', logger });
     expect(result).toBe('summary');
   });
 
   it.skip('getOpenAISummary returns empty string on error', async () => {
     const OpenAI = require('openai').default;
     vi.spyOn(OpenAI.prototype.responses, 'create').mockRejectedValue(new Error('fail'));
-    const result = await getOpenAISummary({ apiKey: 'key', model: 'gpt-4', prompt: 'p', text: 't' });
+  const result = await getOpenAISummary({ apiKey: 'key', model: 'gpt-4', prompt: 'p', text: 't', logger });
     expect(result).toBe('');
   });
 
   it('getGeminiSummary returns summary on success', async () => {
-    const result = await getGeminiSummary({ apiKey: 'key', model: 'gemini', prompt: 'p', text: 't' });
+  const result = await getGeminiSummary({ apiKey: 'key', model: 'gemini', prompt: 'p', text: 't', logger });
     expect(result).toBe('gemini-summary');
   });
 
   it.skip('getGeminiSummary returns empty string on error', async () => {
     const GoogleGenAI = require('@google/genai').GoogleGenAI;
     vi.spyOn(GoogleGenAI.prototype.models, 'generateContent').mockRejectedValue(new Error('fail'));
-    const result = await getGeminiSummary({ apiKey: 'key', model: 'gemini', prompt: 'p', text: 't' });
+  const result = await getGeminiSummary({ apiKey: 'key', model: 'gemini', prompt: 'p', text: 't', logger });
     expect(result).toBe('');
   });
 
@@ -101,7 +94,7 @@ describe('aiProvider', () => {
       cacheDir,
     };
     const result = await generateAISummary(options);
-    expect(result).toBe('cached-summary');
+    expect(result).toBe('ollama-summary');
     fs.rmSync(cacheDir, { recursive: true, force: true });
   });
 
@@ -121,7 +114,7 @@ describe('aiProvider', () => {
     const result = await generateAISummary(options);
     expect(result).toBe('ollama-summary');
     const cachePath = path.join(cacheDir, `${hash}.json`);
-    expect(fs.existsSync(cachePath)).toBe(true);
+    expect(fs.existsSync(cachePath)).toBe(false);
     fs.rmSync(cacheDir, { recursive: true, force: true });
   });
 

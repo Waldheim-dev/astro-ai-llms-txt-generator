@@ -33,7 +33,7 @@ const languageOptions = {
 
 const files = ['**/*.js', '**/*.ts'];
 
-const ignores = ['*.config.*', '*eslint*', '**/coverage/**/*', '**/build/**', '**/dist/**', '**/node_modules/**/*', '**/test*/*'];
+const ignores = ['*.config.*', '**/demo/**', '*eslint*', '**/coverage/**/*', '**/build/**', '**/dist/**', '**/node_modules/**/*', '**/test*/*'];
 
 // eslint-disable-next-line jsdoc/check-tag-names
 /** @type {import('@typescript-eslint/utils').TSESLint.FlatConfig.Config} */

@@ -22,12 +22,6 @@ import { fileURLToPath } from 'node:url';
  * @returns Integration object with build hook
  */
 export default function llmsTxt(options: LlmsTxtOptions = {}) {
-  const logger = {
-    info: (...args: unknown[]) => console.info(...args),
-    warn: (...args: unknown[]) => console.warn(...args),
-    error: (...args: unknown[]) => console.error(...args),
-    debug: (...args: unknown[]) => console.debug(...args),
-  };
   const {
     projectName = 'Projectname',
     description = 'Automatically generated overview for LLMs.',
@@ -43,7 +37,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
   return {
     name: 'llms-txt',
     hooks: {
-      'astro:build:done': async ({ dir }: { dir: string }) => {
+      'astro:build:done': async ({ dir, logger }: { dir: string; logger }) => {
         const distPath = fileURLToPath(dir);
         const resolvedDistPath = path.resolve(distPath);
         const htmlFiles = await fg('**/*.html', { cwd: resolvedDistPath, absolute: true });
@@ -86,7 +80,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
             const kiInput = [title, h1, h2s, h3s, allPs].filter(Boolean).join('\n');
             const kiInputShort =
               kiInput.length > maxInputLength ? kiInput.slice(0, maxInputLength) : kiInput;
-            const debug = options.debug || false;
+            // ...existing code...
 
             // Prompt-Auswahl je nach Abschnitt
             let promptToUse = fullPrompt;
@@ -98,7 +92,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
             if (aiProvider && summary) {
               try {
                 const summaryOptions: AISummaryOptions = {
-                  logger: console,
+                  logger,
                   provider: aiProvider,
                   apiKey: aiApiKey,
                   model: aiModel,
@@ -106,7 +100,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
                   text: kiInputShort,
                   aiUrl,
                   cacheDir,
-                  debug,
+                  debug: options.debug || false,
                 };
                 summary = await generateAISummary(summaryOptions);
               } catch (e) {
