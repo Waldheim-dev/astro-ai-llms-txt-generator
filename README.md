@@ -32,7 +32,7 @@ bun add @waldheimdev/astro-ai-llms-txt
 Add the plugin to your `astro.config.mjs` and let the magic begin:
 
 ```js
-import llmsTxt from 'astro-ai-llms-txt';
+import llmsTxt from '@waldheimdev/astro-ai-llms-txt';
 
 export default {
   integrations: [

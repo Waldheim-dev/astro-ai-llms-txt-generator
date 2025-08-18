@@ -1,12 +1,12 @@
-import type { LlmsTxtOptions } from './types.ts';
+import type { LlmsTxtOptions } from './types.js';
 import {
   getMainSummaryPrompt,
   getDetailsPrompt,
   getFileListPrompt,
   getFullLlmsTxtPrompt,
-} from './prompt.ts';
-import { AISummaryOptions, generateAISummary } from './aiProvider.ts';
-import { extractMetaContent, extractTagText } from './extractHtml.ts';
+} from './prompt.js';
+import { AISummaryOptions, generateAISummary } from './aiProvider.js';
+import { extractMetaContent, extractTagText } from './extractHtml.js';
 import fs from 'fs';
 import path from 'path';
 import fg from 'fast-glob';
