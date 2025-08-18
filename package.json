@@ -1,7 +1,7 @@
 {
   "name": "@waldheimdev/astro-ai-llms-txt",
   "version": "1.1.1",
-  "description": "Astro Integration: llms.txt Generator (KI-optimierte Zusammenfassung aller HTML-Seiten)",
+  "description": "Astro Integration: llms.txt generator (AI-optimized summary of all HTML pages)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "private": false,
@@ -10,7 +10,8 @@
   ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
-    "tag": "latest"
+    "tag": "latest",
+    "access": "public"
   },
   "type": "module",
   "scripts": {
