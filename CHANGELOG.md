@@ -1,3 +1,10 @@
+## [1.1.1](https://gitlab.com/forestdesign/astro-ai-llms.txt/compare/v1.1.0...v1.1.1) (2025-08-18)
+
+
+### Bug Fixes
+
+* update import paths to include file extensions and adjust TypeScript configuration ([b3787c1](https://gitlab.com/forestdesign/astro-ai-llms.txt/commit/b3787c1cd3dd9e331f22802bf55dfa292ce4d278))
+
 # [1.1.0](https://gitlab.com/forestdesign/astro-ai-llms.txt/compare/v1.0.0...v1.1.0) (2025-08-14)
 
 
