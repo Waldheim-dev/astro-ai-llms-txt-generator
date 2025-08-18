@@ -8,7 +8,6 @@ import {
   getOllamaSummary,
   generateAISummary,
   AISummaryOptions,
-  Logger
 } from '../src/aiProvider';
 
 // Mocks must be at the top level!
@@ -29,7 +28,7 @@ vi.mock('ollama', () => ({
 }));
 
 describe('aiProvider', () => {
-  const logger: Logger = {
+  const logger = {
     debug: vi.fn(),
     info: vi.fn(),
     warn: vi.fn(),
