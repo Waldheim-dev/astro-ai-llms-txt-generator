@@ -1,3 +1,14 @@
+## [1.1.2](https://gitlab.com/forestdesign/astro-ai-llms.txt/compare/v1.1.1...v1.1.2) (2025-08-18)
+
+
+### Bug Fixes
+
+* ensure package.json has private set to [secure] ([d7a94e6](https://gitlab.com/forestdesign/astro-ai-llms.txt/commit/d7a94e67b266c1c20244ed73c4725382dc0806a1))
+* initialize demo project with Astro framework ([465fea8](https://gitlab.com/forestdesign/astro-ai-llms.txt/commit/465fea8d2b4a06fb494f0032d24f81e7b3e1ef29))
+* remove unused Logger type from aiProvider tests ([eb2362a](https://gitlab.com/forestdesign/astro-ai-llms.txt/commit/eb2362a59220a79e9bae874f1314f065e5235968))
+* update import paths to use file extensions and correct module casing in tsconfig ([e1e4a13](https://gitlab.com/forestdesign/astro-ai-llms.txt/commit/e1e4a13e7c62919ee18fbe41852c7ae7ca8fd4ce))
+* update package.json description and ensure public access in publishConfig ([22c0784](https://gitlab.com/forestdesign/astro-ai-llms.txt/commit/22c078441a206e762ccebe07b843f94324bc163c))
+
 ## [1.1.1](https://gitlab.com/forestdesign/astro-ai-llms.txt/compare/v1.1.0...v1.1.1) (2025-08-18)
 
 
