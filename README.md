@@ -97,3 +97,9 @@ After every Astro build you'll find in `dist/`:
 **Note:** `llms.txt` complements existing standards like `robots.txt` and `sitemap.xml`, providing LLMs with a curated, AI-optimized overview. Learn more at [llmstxt.org](https://llmstxt.org/)
 
 Made with ❤️ for Astro & AI enthusiasts!
+
+## Need help or find a bug?
+
+Please open an issue on [GitLab](https://gitlab.com/waldheimdev/astro-ai-llms.txt/-/issues) or submit a merge request. We appreciate your feedback!
+
+Or [contact me](https://waldheim.dev/kontakt) on my Website. You need my service? [Let's talk!](https://waldheim.dev/kontakt)
