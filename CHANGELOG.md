@@ -1,3 +1,10 @@
+## [1.1.3](https://gitlab.com/waldheimdev/astro-ai-llms.txt/compare/v1.1.2...v1.1.3) (2025-08-22)
+
+
+### Bug Fixes
+
+* add support and contact information to README; update repository URL and keywords in package.json ([1674f62](https://gitlab.com/waldheimdev/astro-ai-llms.txt/commit/1674f62c5b13d86166731079fbd16457dd2787de))
+
 ## [1.1.2](https://gitlab.com/forestdesign/astro-ai-llms.txt/compare/v1.1.1...v1.1.2) (2025-08-18)
 
 
