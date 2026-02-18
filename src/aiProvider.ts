@@ -7,8 +7,18 @@ import Anthropic from '@anthropic-ai/sdk';
 import crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
 
+interface AstroLogger {
+  info: (message: string) => void;
+  warn: (message: string) => void;
+  error: (message: string) => void;
+  debug: (message: string) => void;
+}
+
+/**
+ * Options for generating an AI summary.
+ */
 export interface AISummaryOptions {
-  logger;
+  logger: AstroLogger;
   provider: string;
   apiKey: string;
   model: string;
@@ -22,6 +32,13 @@ export interface AISummaryOptions {
 
 /**
  * Generates a summary using Anthropic Claude API.
+ * @param root0 - The parameters for the Claude summary.
+ * @param root0.apiKey - The API key for Anthropic.
+ * @param root0.model - The model to use.
+ * @param root0.prompt - The system prompt.
+ * @param root0.text - The text to summarize.
+ * @param root0.logger - The logger instance.
+ * @returns The generated summary.
  */
 export async function getClaudeSummary({
   apiKey,
@@ -34,7 +51,7 @@ export async function getClaudeSummary({
   model: string;
   prompt: string;
   text: string;
-  logger;
+  logger: AstroLogger;
 }): Promise<string> {
   try {
     const usedModel = model || 'claude-3-5-sonnet-latest';
@@ -46,7 +63,7 @@ export async function getClaudeSummary({
       system: prompt,
       messages: [{ role: 'user', content: text }],
     });
-    // @ts-ignore
+    // @ts-expect-error - SDK type definitions might be inconsistent with the version
     const result = response.content[0]?.text?.trim() || '';
     logger.debug(`[CLAUDE-DEBUG] Result: ${result.substring(0, 100)}...`);
     return result;
@@ -58,6 +75,12 @@ export async function getClaudeSummary({
 
 /**
  * Generates a summary using a CLI tool.
+ * @param root0 - The parameters for the CLI summary.
+ * @param root0.command - The CLI command to execute.
+ * @param root0.prompt - The prompt to prepend to the text.
+ * @param root0.text - The text to summarize.
+ * @param root0.logger - The logger instance.
+ * @returns The generated summary.
  */
 export async function getCLISummary({
   command,
@@ -68,7 +91,7 @@ export async function getCLISummary({
   command: string;
   prompt: string;
   text: string;
-  logger;
+  logger: AstroLogger;
 }): Promise<string> {
   try {
     logger.debug(`[CLI-DEBUG] Using CLI command: ${command}`);
@@ -84,7 +107,13 @@ export async function getCLISummary({
 
 /**
  * Generates a summary using OpenAI API.
- * @param params Parameter object: apiKey, model, prompt, text
+ * @param params - The parameters for the OpenAI summary.
+ * @param params.apiKey - The API key for OpenAI.
+ * @param params.model - The model to use.
+ * @param params.prompt - The system prompt.
+ * @param params.text - The text to summarize.
+ * @param params.logger - The logger instance.
+ * @returns The generated summary.
  */
 export async function getOpenAISummary({
   apiKey,
@@ -97,7 +126,7 @@ export async function getOpenAISummary({
   model: string;
   prompt: string;
   text: string;
-  logger;
+  logger: AstroLogger;
 }): Promise<string> {
   try {
     const usedModel = model || 'gpt-4o-mini';
@@ -122,7 +151,13 @@ export async function getOpenAISummary({
 
 /**
  * Generates a summary using Google Gemini API.
- * @param params Parameter object: apiKey, model, prompt, text
+ * @param params - The parameters for the Gemini summary.
+ * @param params.apiKey - The API key for Google Gemini.
+ * @param params.model - The model to use.
+ * @param params.prompt - The prompt.
+ * @param params.text - The text to summarize.
+ * @param params.logger - The logger instance.
+ * @returns The generated summary.
  */
 export async function getGeminiSummary({
   apiKey,
@@ -135,7 +170,7 @@ export async function getGeminiSummary({
   model: string;
   prompt: string;
   text: string;
-  logger;
+  logger: AstroLogger;
 }): Promise<string> {
   try {
     const usedModel = model || 'gemini-1.5-flash';
@@ -156,12 +191,12 @@ export async function getGeminiSummary({
 
 /**
  * Generates a summary using Ollama API.
- * @param params Parameter object: model, prompt, text, logger
- * @param params.model Model name
- * @param params.prompt Prompt for the summary
- * @param params.text Text to summarize
- * @param params.logger Logger instance
- * @returns Summary string
+ * @param params - The parameters for the Ollama summary.
+ * @param params.model - The model to use.
+ * @param params.prompt - The prompt.
+ * @param params.text - The text to summarize.
+ * @param params.logger - The logger instance.
+ * @returns Summary string.
  */
 export async function getOllamaSummary({
   model,
@@ -172,7 +207,7 @@ export async function getOllamaSummary({
   model: string;
   prompt: string;
   text: string;
-  logger;
+  logger: AstroLogger;
 }): Promise<string> {
   const maxRetries = 5;
   const delayMs = 2000;
@@ -231,12 +266,15 @@ export async function getOllamaSummary({
 
 /**
  * Generates an AI summary for the given text using the selected provider and caching.
- * @param options Options for summary generation
- * @returns AI summary as string (Promise)
+ * @param options - Options for summary generation.
+ * @returns AI summary as string (Promise).
  */
 export async function generateAISummary(options: AISummaryOptions): Promise<string> {
   const { logger, provider, apiKey, model, prompt, text, cacheDir, debug } = options;
-  // Fallback-Logger für Debug-Ausgaben
+  /**
+   * Internal debug logger.
+   * @param args - Arguments to log.
+   */
   function debugLog(...args: unknown[]) {
     if ((!logger || typeof logger.debug !== 'function') && debug) {
       // Schreibe Debug-Ausgaben immer auf die Konsole, unabhängig vom Astro-Logger
@@ -259,6 +297,10 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
     .digest('hex');
   const cachePath = cacheDir ? path.join(cacheDir, `${hash}.json`) : '';
 
+  /**
+   * Reads from cache.
+   * @returns Cached summary or null.
+   */
   function readCache(): string | null {
     if (cacheDir && fs.existsSync(cachePath)) {
       try {
@@ -274,6 +316,10 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
     return null;
   }
 
+  /**
+   * Gets summary from selected provider.
+   * @returns Summary string.
+   */
   async function getProviderSummary(): Promise<string> {
     switch (provider) {
       case 'openai':

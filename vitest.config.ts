@@ -5,11 +5,25 @@ export default defineConfig({
   plugins: [tsconfigPath()],
   test: {
     clearMocks: true,
-    exclude: ['*.config.*', '*eslint*', 'eslint-subconfigs/**/*', 'node_modules/**/*', '**/demo/**'],
+    exclude: [
+      '*.config.*',
+      '*eslint*',
+      'eslint-subconfigs/**/*',
+      'node_modules/**/*',
+      '**/demo/**',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['json', 'lcov', 'html', 'text', 'clover', 'cobertura'],
-      exclude: ['eslint-subconfigs/**', '**/eslint-subconfigs/**', 'dist/**', '*.config.*', '*eslint*', 'node_modules/**', '**/demo/**'],
+      exclude: [
+        'eslint-subconfigs/**',
+        '**/eslint-subconfigs/**',
+        'dist/**',
+        '*.config.*',
+        '*eslint*',
+        'node_modules/**',
+        '**/demo/**',
+      ],
     },
     pool: 'forks',
     poolOptions: {

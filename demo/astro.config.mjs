@@ -9,8 +9,8 @@ export default defineConfig({
       projectName: '🚀 My Project',
       description: 'KI-optimized overview for LLMs. 🧠',
       aiProvider: 'gemini',
-    aiModel: 'gemini-2.5-flash',
-      aiApiKey: "#", // Replace # with your token
+      aiModel: 'gemini-2.5-flash',
+      aiApiKey: '#', // Replace # with your token
       site: 'https://my-domain.com', // Base URL for links
       maxInputLength: 8000, // Optional: max length for AI input
       debug: true, // Optional: enable debug mode for detailed logs

@@ -1,4 +1,3 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
@@ -15,15 +14,15 @@ import {
 // Mocks must be at the top level!
 vi.mock('openai', () => ({
   default: class {
-    chat = { 
+    chat = {
       completions: {
-        create: vi.fn().mockResolvedValue({ 
-          choices: [{ message: { content: 'summary' } }] 
-        })
-      }
+        create: vi.fn().mockResolvedValue({
+          choices: [{ message: { content: 'summary' } }],
+        }),
+      },
     };
     constructor() {}
-  }
+  },
 }));
 
 vi.mock('@google/genai', () => ({
@@ -31,31 +30,31 @@ vi.mock('@google/genai', () => ({
     getGenerativeModel = vi.fn().mockReturnValue({
       generateContent: vi.fn().mockResolvedValue({
         response: {
-          text: () => 'gemini-summary'
-        }
-      })
+          text: () => 'gemini-summary',
+        },
+      }),
     });
     constructor() {}
-  }
+  },
 }));
 
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
     messages = {
       create: vi.fn().mockResolvedValue({
-        content: [{ text: 'claude-summary' }]
-      })
+        content: [{ text: 'claude-summary' }],
+      }),
     };
     constructor() {}
-  }
+  },
 }));
 
 vi.mock('ollama', () => ({
-  default: { chat: vi.fn().mockResolvedValue({ message: { content: 'ollama-summary' } }) }
+  default: { chat: vi.fn().mockResolvedValue({ message: { content: 'ollama-summary' } }) },
 }));
 
 vi.mock('node:child_process', () => ({
-  execSync: vi.fn().mockReturnValue('cli-summary')
+  execSync: vi.fn().mockReturnValue('cli-summary'),
 }));
 
 describe('aiProvider', () => {
@@ -71,17 +70,35 @@ describe('aiProvider', () => {
   });
 
   it('getOpenAISummary returns summary on success', async () => {
-    const result = await getOpenAISummary({ apiKey: 'key', model: 'gpt-4', prompt: 'p', text: 't', logger });
+    const result = await getOpenAISummary({
+      apiKey: 'key',
+      model: 'gpt-4',
+      prompt: 'p',
+      text: 't',
+      logger,
+    });
     expect(result).toBe('summary');
   });
 
   it('getGeminiSummary returns summary on success', async () => {
-    const result = await getGeminiSummary({ apiKey: 'key', model: 'gemini', prompt: 'p', text: 't', logger });
+    const result = await getGeminiSummary({
+      apiKey: 'key',
+      model: 'gemini',
+      prompt: 'p',
+      text: 't',
+      logger,
+    });
     expect(result).toBe('gemini-summary');
   });
 
   it('getClaudeSummary returns summary on success', async () => {
-    const result = await getClaudeSummary({ apiKey: 'key', model: 'claude', prompt: 'p', text: 't', logger });
+    const result = await getClaudeSummary({
+      apiKey: 'key',
+      model: 'claude',
+      prompt: 'p',
+      text: 't',
+      logger,
+    });
     expect(result).toBe('claude-summary');
   });
 

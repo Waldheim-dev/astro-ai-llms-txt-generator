@@ -13,14 +13,21 @@ import fg from 'fast-glob';
 import { fileURLToPath } from 'node:url';
 import pLimit from 'p-limit';
 
+interface AstroLogger {
+  info: (message: string) => void;
+  warn: (message: string) => void;
+  error: (message: string) => void;
+  debug: (message: string) => void;
+}
+
 /**
  * Astro Integration: llms.txt Generator
  *
  * This plugin generates an LLM-optimized llms.txt in the build output for every Astro build.
  * It extracts relevant content from all rendered HTML pages, summarizes them via AI, and outputs them with fully qualified web URLs.
  * Entries are grouped by root sections (e.g. /blog/, /services/).
- * @param options Plugin configuration
- * @returns Integration object with build hook
+ * @param options - Plugin configuration.
+ * @returns Integration object with build hook.
  */
 export default function llmsTxt(options: LlmsTxtOptions = {}) {
   const {
@@ -41,11 +48,11 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
   return {
     name: 'llms-txt',
     hooks: {
-      'astro:build:done': async ({ dir, logger }: { dir: URL; logger: any }) => {
+      'astro:build:done': async ({ dir, logger }: { dir: URL; logger: AstroLogger }) => {
         const distPath = fileURLToPath(dir);
         const resolvedDistPath = path.resolve(distPath);
         const htmlFiles = await fg('**/*.html', { cwd: resolvedDistPath, absolute: true });
-        
+
         if (!htmlFiles.length) {
           logger.warn('No HTML files found. Skipping llms.txt generation.');
           return;
@@ -57,7 +64,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         }
 
         const baseUrl = site ? site.replace(/\/$/, '') : '';
-        
+
         // Prompts
         const mainPrompt = getMainSummaryPrompt(language);
         const detailsPrompt = getDetailsPrompt(language);
@@ -67,7 +74,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         const limit = pLimit(concurrency || 5);
 
         const pageInfos = await Promise.all(
-          htmlFiles.map((file: string) => 
+          htmlFiles.map((file: string) =>
             limit(async () => {
               try {
                 const html = fs.readFileSync(file, 'utf-8');
@@ -81,7 +88,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
                 const title = extractTagText(html, 'title');
                 const metaDescription = extractMetaContent(html, 'description');
                 const h1 = extractTagText(html, 'h1');
-                
+
                 // Content extraction with fallbacks
                 const h2s = Array.from(html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi))
                   .map((m) => m[1].trim())
@@ -99,12 +106,16 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
 
                 // Prompt selection logic
                 let promptToUse = fullPrompt;
-                if (title || h1) promptToUse = mainPrompt;
-                else if (h2s || h3s) promptToUse = fileListPrompt;
-                else if (allPs) promptToUse = detailsPrompt;
+                if (title || h1) {
+                  promptToUse = mainPrompt;
+                } else if (h2s || h3s) {
+                  promptToUse = fileListPrompt;
+                } else if (allPs) {
+                  promptToUse = detailsPrompt;
+                }
 
                 let summary = metaDescription || '';
-                
+
                 if (aiProvider) {
                   try {
                     const summaryOptions: AISummaryOptions = {
@@ -120,29 +131,35 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
                       cliCommand,
                     };
                     const aiSummary = await generateAISummary(summaryOptions);
-                    if (aiSummary) summary = aiSummary;
+                    if (aiSummary) {
+                      summary = aiSummary;
+                    }
                   } catch (e) {
-                    logger.error(`Error generating AI summary for ${relUrl}: ${e instanceof Error ? e.message : String(e)}`);
+                    logger.error(
+                      `Error generating AI summary for ${relUrl}: ${e instanceof Error ? e.message : String(e)}`
+                    );
                   }
                 }
 
-                return { 
-                  url: fullUrl, 
-                  title: title || h1 || relUrl, 
+                return {
+                  url: fullUrl,
+                  title: title || h1 || relUrl,
                   summary: summary.trim(),
                   relUrl,
-                  fullContent: kiInput // Store full content for llms-full.txt
+                  fullContent: kiInput, // Store full content for llms-full.txt
                 };
               } catch (e) {
-                logger.error(`Failed to process ${file}: ${e instanceof Error ? e.message : String(e)}`);
+                logger.error(
+                  `Failed to process ${file}: ${e instanceof Error ? e.message : String(e)}`
+                );
                 return null;
               }
             })
           )
         );
 
-        const validPages = pageInfos.filter((info): info is NonNullable<typeof info> => 
-          info !== null && info.summary.length > 0
+        const validPages = pageInfos.filter(
+          (info): info is NonNullable<typeof info> => info !== null && info.summary.length > 0
         );
 
         if (!validPages.length) {
@@ -154,7 +171,9 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         validPages.forEach((info) => {
           const sectionMatch = /^\/([^/]+)\//.exec(info.relUrl);
           const section = sectionMatch ? sectionMatch[1] : 'General';
-          if (!sectionMap.has(section)) sectionMap.set(section, []);
+          if (!sectionMap.has(section)) {
+            sectionMap.set(section, []);
+          }
           sectionMap.get(section)!.push(info);
         });
 
@@ -163,16 +182,16 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
 
         let llmsFullContent = `# ${projectName} - Full Content\n\n`;
 
-        for (const [section, entries] of sectionMap.entries()) {
+        sectionMap.forEach((entries, section) => {
           llmsTxtContent += `## ${section.charAt(0).toUpperCase() + section.slice(1)}\n\n`;
-          for (const info of entries) {
+          entries.forEach((info) => {
             llmsTxtContent += `- [${info.title}](${info.url}): ${info.summary}\n`;
             if (llmsFull) {
               llmsFullContent += `## ${info.title}\n\nURL: ${info.url}\n\n${info.fullContent}\n\n---\n\n`;
             }
-          }
+          });
           llmsTxtContent += '\n';
-        }
+        });
 
         const outPath = path.join(distPath, 'llms.txt');
         fs.writeFileSync(outPath, llmsTxtContent, { encoding: 'utf8' });

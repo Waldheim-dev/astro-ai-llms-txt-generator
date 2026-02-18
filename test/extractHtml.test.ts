@@ -19,7 +19,7 @@ describe('extractHtml helpers', () => {
   `;
 
   it('extracts title tag', () => {
-  expect(extractTagText(html, 'title')).toBe('Test Title');
+    expect(extractTagText(html, 'title')).toBe('Test Title');
   });
 
   it('extracts meta description', () => {
@@ -27,10 +27,10 @@ describe('extractHtml helpers', () => {
   });
 
   it('extracts h1 tag', () => {
-  expect(extractTagText(html, 'h1')).toBe('Headline');
+    expect(extractTagText(html, 'h1')).toBe('Headline');
   });
 
   it('extracts first p tag', () => {
-  expect(extractTagText(html, 'p')).toBe('First paragraph.');
+    expect(extractTagText(html, 'p')).toBe('First paragraph.');
   });
 });

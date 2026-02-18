@@ -56,28 +56,29 @@ If you have a CLI tool that can take a prompt and text via stdin and return a su
 llmsTxt({
   aiProvider: 'cli',
   cliCommand: 'gemini-cli summarize', // The tool should accept input via stdin
-})
+});
 ```
 
 ## Configuration Options
 
-| Option | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `projectName` | `string` | `'Projectname'` | The H1 title of your llms.txt. |
-| `description` | `string` | `'Automatically generated...'` | The blockquote description. |
-| `aiProvider` | `string` | `'ollama'` | `openai`, `gemini`, `claude`, `ollama`, or `cli`. |
-| `aiApiKey` | `string` | `''` | API key for the selected provider. |
-| `aiModel` | `string` | `'llama3'` | Model name to use for summarization. |
-| `cliCommand` | `string` | `''` | Command to run if `aiProvider` is `cli`. |
-| `llmsFull` | `boolean` | `false` | Whether to generate `llms-full.txt`. |
-| `concurrency` | `number` | `5` | Max simultaneous AI requests. |
-| `language` | `string` | `'en'` | Prompt language (`en`, `de`, `fr`). |
-| `maxInputLength`| `number` | `8000` | Max characters sent to the AI per page. |
-| `debug` | `boolean` | `false` | Enable verbose logging. |
+| Option           | Type      | Default                        | Description                                       |
+| :--------------- | :-------- | :----------------------------- | :------------------------------------------------ |
+| `projectName`    | `string`  | `'Projectname'`                | The H1 title of your llms.txt.                    |
+| `description`    | `string`  | `'Automatically generated...'` | The blockquote description.                       |
+| `aiProvider`     | `string`  | `'ollama'`                     | `openai`, `gemini`, `claude`, `ollama`, or `cli`. |
+| `aiApiKey`       | `string`  | `''`                           | API key for the selected provider.                |
+| `aiModel`        | `string`  | `'llama3'`                     | Model name to use for summarization.              |
+| `cliCommand`     | `string`  | `''`                           | Command to run if `aiProvider` is `cli`.          |
+| `llmsFull`       | `boolean` | `false`                        | Whether to generate `llms-full.txt`.              |
+| `concurrency`    | `number`  | `5`                            | Max simultaneous AI requests.                     |
+| `language`       | `string`  | `'en'`                         | Prompt language (`en`, `de`, `fr`).               |
+| `maxInputLength` | `number`  | `8000`                         | Max characters sent to the AI per page.           |
+| `debug`          | `boolean` | `false`                        | Enable verbose logging.                           |
 
 ## CI/CD
 
 This repository includes GitHub Actions for:
+
 - **Linting & Testing**: Runs on every PR and push to main.
 - **Automated Releases**: Uses `semantic-release` to publish to npm and GitHub.
 

@@ -488,11 +488,13 @@ const eslintRules = {
   'no-restricted-globals': [
     'error',
     {
-      message: 'Use Number.isFinite instead https://github.com/airbnb/javascript#standard-library--isfinite',
+      message:
+        'Use Number.isFinite instead https://github.com/airbnb/javascript#standard-library--isfinite',
       name: 'isFinite',
     },
     {
-      message: 'Use Number.isNaN instead https://github.com/airbnb/javascript#standard-library--isnan',
+      message:
+        'Use Number.isNaN instead https://github.com/airbnb/javascript#standard-library--isnan',
       name: 'isNaN',
     },
     'addEventListener',
@@ -626,11 +628,13 @@ const eslintRules = {
       selector: 'ForOfStatement',
     },
     {
-      message: 'Labels are a form of GOTO; using them makes code confusing and hard to maintain and understand.',
+      message:
+        'Labels are a form of GOTO; using them makes code confusing and hard to maintain and understand.',
       selector: 'LabeledStatement',
     },
     {
-      message: '`with` is disallowed in strict mode because it makes code impossible to predict and optimize.',
+      message:
+        '`with` is disallowed in strict mode because it makes code impossible to predict and optimize.',
       selector: 'WithStatement',
     },
   ],

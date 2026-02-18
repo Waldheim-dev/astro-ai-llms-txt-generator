@@ -20,7 +20,7 @@ describe('extractContentFromHtml', () => {
   const url = '/blog/test.html';
 
   it('extracts all fields correctly', () => {
-  const result = extractHtmlContent(html, url);
+    const result = extractHtmlContent(html, url);
     expect(result.title).toBe('Test Title');
     expect(result.description).toBe('Test Description');
     expect(result.headings).toEqual(['Headline', 'Section', 'Subsection']);
@@ -31,7 +31,7 @@ describe('extractContentFromHtml', () => {
 
   it('handles missing tags gracefully', () => {
     const emptyHtml = '<html><body></body></html>';
-  const result = extractHtmlContent(emptyHtml, '/foo/bar.html');
+    const result = extractHtmlContent(emptyHtml, '/foo/bar.html');
     expect(result.title).toBe('');
     expect(result.description).toBe('');
     expect(result.headings).toEqual([]);

@@ -23,12 +23,12 @@ module.exports = {
       },
     ],
     ['@semantic-release/changelog'],
-    "@semantic-release/npm",
+    '@semantic-release/npm',
     ['@semantic-release/github'],
     [
-      "@semantic-release/git",
+      '@semantic-release/git',
       {
-        assets: ["CHANGELOG.md", "package.json"],
+        assets: ['CHANGELOG.md', 'package.json'],
       },
     ],
   ],
@@ -41,5 +41,5 @@ module.exports = {
     { name: 'next', prerelease: 'next' },
     { name: 'beta', prerelease: true },
     { name: 'alpha', prerelease: true },
-  ]
+  ],
 };

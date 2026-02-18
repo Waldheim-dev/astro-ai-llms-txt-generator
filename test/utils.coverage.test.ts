@@ -20,7 +20,6 @@ describe('debugLog', () => {
   const originalEnv = process.env.DEBUG_LLMS_TXT;
   const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-
   it('logs when DEBUG_LLMS_TXT=1', () => {
     process.env.DEBUG_LLMS_TXT = '1';
     debugLog('foo', 'bar');
