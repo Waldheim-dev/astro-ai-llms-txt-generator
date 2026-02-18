@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.2.1...v1.2.2) (2026-02-18)
+
+
+### Bug Fixes
+
+* remove unused [@ts-expect-error](https://github.com/ts-expect-error) in processor.ts ([bbbe0d1](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/bbbe0d11a9afd2295a2abf10b90136cf4fea1b4d))
+
 ## [1.2.1](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.2.0...v1.2.1) (2026-02-18)
 
 
