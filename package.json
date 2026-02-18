@@ -1,6 +1,6 @@
 {
   "name": "@waldheimdev/astro-ai-llms-txt-generator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Astro Integration: llms.txt generator (AI-optimized summary of all HTML pages)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
