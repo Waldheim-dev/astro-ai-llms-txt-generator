@@ -85,10 +85,20 @@ async function processFile(
 
     if (aiProvider) {
       try {
+        // Fallback to environment variables if no API key is provided in options
+        const envKey =
+          aiProvider === 'gemini'
+            ? process.env.GEMINI_API_KEY
+            : aiProvider === 'openai'
+              ? process.env.OPENAI_API_KEY
+              : aiProvider === 'claude'
+                ? process.env.ANTHROPIC_API_KEY
+                : '';
+
         const summaryOptions: AISummaryOptions = {
           logger,
           provider: aiProvider,
-          apiKey: aiApiKey || '',
+          apiKey: aiApiKey || envKey || '',
           model: aiModel || '',
           prompt: promptToUse,
           text: kiInputShort,
@@ -96,6 +106,8 @@ async function processFile(
           cacheDir,
           debug: options.debug || false,
           cliCommand,
+          geminiThinkingLevel: options.geminiThinkingLevel,
+          geminiThinkingBudget: options.geminiThinkingBudget,
         };
         const aiSummary = await generateAISummary(summaryOptions);
         if (aiSummary) {

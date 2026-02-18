@@ -28,6 +28,8 @@ export interface AISummaryOptions {
   cacheDir?: string;
   debug?: boolean;
   cliCommand?: string;
+  geminiThinkingLevel?: string;
+  geminiThinkingBudget?: number;
 }
 
 /**
@@ -54,7 +56,7 @@ export async function getClaudeSummary({
   logger: AstroLogger;
 }): Promise<string> {
   try {
-    const usedModel = model || 'claude-3-5-sonnet-latest';
+    const usedModel = model || 'claude-4-6-opus';
     logger.debug(`[CLAUDE-DEBUG] Using Anthropic API with model: ${usedModel}`);
     const anthropic = new Anthropic({ apiKey });
     const response = await anthropic.messages.create({
@@ -129,7 +131,7 @@ export async function getOpenAISummary({
   logger: AstroLogger;
 }): Promise<string> {
   try {
-    const usedModel = model || 'gpt-4o-mini';
+    const usedModel = model || 'gpt-5.3';
     logger.debug(`[OPENAI-DEBUG] Using OpenAI API with model: ${usedModel}`);
     const client = new OpenAI({ apiKey });
     const completion = await client.chat.completions.create({
@@ -165,22 +167,38 @@ export async function getGeminiSummary({
   prompt,
   text,
   logger,
+  thinkingLevel,
+  thinkingBudget,
 }: {
   apiKey: string;
   model: string;
   prompt: string;
   text: string;
   logger: AstroLogger;
+  thinkingLevel?: string;
+  thinkingBudget?: number;
 }): Promise<string> {
   try {
-    const usedModel = model || 'gemini-1.5-flash';
+    const usedModel = model || 'gemini-2.5-flash';
     logger.debug(`[GENAI-DEBUG] Using Google Gemini API with model: ${usedModel}`);
-    // @ts-expect-error - SDK type definitions might be inconsistent with the version
-    const ai = new GoogleGenAI(apiKey);
-    // @ts-expect-error - SDK type definitions might be inconsistent with the version
-    const modelInstance = ai.getGenerativeModel({ model: usedModel });
-    const result = await modelInstance.generateContent([prompt, text]);
-    const response = result.response.text().trim();
+    const ai = new GoogleGenAI({ apiKey });
+
+    const config: any = {};
+    if (thinkingLevel || thinkingBudget) {
+      config.thinkingConfig = {
+        includeThoughts: false,
+      };
+      if (thinkingLevel) config.thinkingConfig.thinkingLevel = thinkingLevel;
+      if (thinkingBudget) config.thinkingConfig.thinkingBudget = thinkingBudget;
+    }
+
+    logger.debug(`[GENAI-DEBUG] Calling generateContent with model: ${usedModel}`);
+    const result = await ai.models.generateContent({
+      model: usedModel,
+      contents: `${prompt}\n\n${text}`,
+      config,
+    });
+    const response = (typeof result.text === 'function' ? result.text() : result.text) || '';
     logger.debug(`[GENAI-DEBUG] Result: ${response.substring(0, 100)}...`);
     return response;
   } catch (e) {
@@ -285,8 +303,16 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
       logger.debug(...args);
     }
   }
+
+  const wrappedLogger: AstroLogger = {
+    info: (...args: unknown[]) => logger.info(...args),
+    warn: (...args: unknown[]) => logger.warn(...args),
+    error: (...args: unknown[]) => logger.error(...args),
+    debug: debugLog,
+  };
+
   if (!provider || (provider !== 'ollama' && !apiKey)) {
-    logger.warn(
+    wrappedLogger.warn(
       '[DEBUG] No AI provider specified or API key missing! No AI summary will be generated.'
     );
     return '';
@@ -306,11 +332,11 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
       try {
         const cached = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
         if (cached && typeof cached.summary === 'string') {
-          logger.debug(`AI cache hit for hash ${hash}`);
+          wrappedLogger.debug(`AI cache hit for hash ${hash}`);
           return cached.summary;
         }
       } catch (e) {
-        logger.warn(`Error reading AI cache: ${e instanceof Error ? e.message : String(e)}`);
+        wrappedLogger.warn(`Error reading AI cache: ${e instanceof Error ? e.message : String(e)}`);
       }
     }
     return null;
@@ -328,7 +354,7 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
           model,
           prompt,
           text,
-          logger: { ...logger, debug: debugLog },
+          logger: wrappedLogger,
         });
       case 'gemini':
         return getGeminiSummary({
@@ -336,7 +362,9 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
           model,
           prompt,
           text,
-          logger: { ...logger, debug: debugLog },
+          logger: wrappedLogger,
+          thinkingLevel: options.geminiThinkingLevel,
+          thinkingBudget: options.geminiThinkingBudget,
         });
       case 'claude':
         return getClaudeSummary({
@@ -344,19 +372,19 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
           model,
           prompt,
           text,
-          logger: { ...logger, debug: debugLog },
+          logger: wrappedLogger,
         });
       case 'ollama':
-        return getOllamaSummary({ model, prompt, text, logger: { ...logger, debug: debugLog } });
+        return getOllamaSummary({ model, prompt, text, logger: wrappedLogger });
       case 'cli':
         return getCLISummary({
           command: options.cliCommand || 'cat',
           prompt,
           text,
-          logger: { ...logger, debug: debugLog },
+          logger: wrappedLogger,
         });
       default:
-        logger.warn('Unknown provider.');
+        wrappedLogger.warn('Unknown provider.');
         return '';
     }
   }
@@ -369,9 +397,9 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
   if (cacheDir && summary) {
     try {
       fs.writeFileSync(cachePath, JSON.stringify({ summary }), 'utf-8');
-      logger.debug(`AI response cached at ${cachePath}`);
+      wrappedLogger.debug(`AI response cached at ${cachePath}`);
     } catch (e) {
-      logger.warn(`Error writing AI cache: ${e instanceof Error ? e.message : String(e)}`);
+      wrappedLogger.warn(`Error writing AI cache: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
   return summary;

@@ -13,4 +13,6 @@ export interface LlmsTxtOptions {
   concurrency?: number;
   llmsFull?: boolean; // Generate llms-full.txt as well
   cliCommand?: string; // Command for 'cli' provider, e.g., 'gemini summarize'
+  geminiThinkingLevel?: 'low' | 'medium' | 'high' | 'minimal';
+  geminiThinkingBudget?: number;
 }
