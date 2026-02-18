@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import ollama from 'ollama';
 import OpenAI from 'openai';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, type ThinkingLevel } from '@google/genai';
 import Anthropic from '@anthropic-ai/sdk';
 import crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
@@ -185,12 +185,18 @@ export async function getGeminiSummary({
     logger.debug(`[GENAI-DEBUG] Using Google Gemini API with model: ${usedModel}`);
     const ai = new GoogleGenAI({ apiKey });
 
-    const config: any = {};
+    const config: {
+      thinkingConfig?: {
+        includeThoughts: boolean;
+        thinkingLevel?: ThinkingLevel;
+        thinkingBudget?: number;
+      };
+    } = {};
     if (thinkingLevel || thinkingBudget) {
       config.thinkingConfig = {
         includeThoughts: false,
       };
-      if (thinkingLevel) config.thinkingConfig.thinkingLevel = thinkingLevel;
+      if (thinkingLevel) config.thinkingConfig.thinkingLevel = thinkingLevel as ThinkingLevel;
       if (thinkingBudget) config.thinkingConfig.thinkingBudget = thinkingBudget;
     }
 
@@ -201,8 +207,10 @@ export async function getGeminiSummary({
       config,
     });
     // Handle both property (getter) and method for 'text' to be compatible with different SDK versions
-    const resAny = result as any;
-    const response = (typeof resAny.text === 'function' ? resAny.text() : resAny.text) || '';
+    // Use type assertion to unknown first to avoid linting/build conflicts
+    const resUnknown = result as unknown as { text: string | (() => string) };
+    const response =
+      (typeof resUnknown.text === 'function' ? resUnknown.text() : resUnknown.text) || '';
     logger.debug(`[GENAI-DEBUG] Result: ${response.substring(0, 100)}...`);
     return response;
   } catch (e) {
