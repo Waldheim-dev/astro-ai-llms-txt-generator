@@ -22,6 +22,9 @@
 
 ## Developer Workflows
 
+- **Mandatory Verification:**
+  - **Before completing any task, you MUST run:** `npm run lint && npm run build && npm test`.
+  - All commands must pass without errors.
 - **Build:**
   - Standard Astro build triggers plugin logic.
   - Output: `dist/llms.txt` and `.llms-txt-cache/`.
