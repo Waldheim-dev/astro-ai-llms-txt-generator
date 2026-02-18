@@ -1,21 +1,24 @@
-# Contributing to @waldheimdev/astro-ai-llms-txt-generator
+# Contributing to @waldheimdev/astro-ai-llms-txt
 
 Thank you for your interest in contributing to our Astro integration! Here are some guidelines to help you get started.
 
 ## 🛠️ Development Setup
 
 1.  **Clone the repository:**
+
     ```bash
     git clone https://github.com/Waldheim-dev/astro-ai-llms-txt-generator.git
     cd astro-ai-llms-txt-generator
     ```
 
 2.  **Install dependencies:**
+
     ```bash
     npm install
     ```
 
 3.  **Run tests:**
+
     ```bash
     npm test
     ```

@@ -7,17 +7,15 @@
 
 # [1.2.0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.1.3...v1.2.0) (2026-02-18)
 
-
 ### Bug Fixes
 
-* resolve gemini typescript errors and refine logger fallback ([de604c9](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/de604c96c4dbeb9dfd5b6e60d1a22cd59bb46bce))
-* update AstroLogger interface to allow rest parameters and fix TS2556 ([a3a73c0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/a3a73c0bc545b82090e2a34055809f40ebc04113))
-* update CI/CD to Node 24 and fix audit failures ([cf7601b](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/cf7601b7703fa1cc773038632155d0fb38c1479b))
-
+- resolve gemini typescript errors and refine logger fallback ([de604c9](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/de604c96c4dbeb9dfd5b6e60d1a22cd59bb46bce))
+- update AstroLogger interface to allow rest parameters and fix TS2556 ([a3a73c0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/a3a73c0bc545b82090e2a34055809f40ebc04113))
+- update CI/CD to Node 24 and fix audit failures ([cf7601b](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/cf7601b7703fa1cc773038632155d0fb38c1479b))
 
 ### Features
 
-* add claude and cli support, optimize prompts, and llms-full.txt generation ([d2eba21](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/d2eba21f75ac30333edda01932db1beec6421c20))
+- add claude and cli support, optimize prompts, and llms-full.txt generation ([d2eba21](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/d2eba21f75ac30333edda01932db1beec6421c20))
 
 # 1.0.0 (2026-02-18)
 

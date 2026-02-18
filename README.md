@@ -1,6 +1,6 @@
-# @waldheimdev/astro-ai-llms-txt-generator
+# @waldheimdev/astro-ai-llms-txt
 
-[![npm version](https://img.shields.io/npm/v/@waldheimdev/astro-ai-llms-txt-generator.svg)](https://www.npmjs.com/package/@waldheimdev/astro-ai-llms-txt-generator)
+[![npm version](https://img.shields.io/npm/v/@waldheimdev/astro-ai-llms-txt.svg)](https://www.npmjs.com/package/@waldheimdev/astro-ai-llms-txt)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/actions/workflows/release.yml/badge.svg)](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/actions)
 
@@ -27,7 +27,7 @@ Follows the [llms.txt](https://llmstxt.org/) standard.
 ## 📦 Installation
 
 ```bash
-npm install @waldheimdev/astro-ai-llms-txt-generator
+npm install @waldheimdev/astro-ai-llms-txt
 ```
 
 ## 🛠️ Usage
@@ -36,7 +36,7 @@ Add the integration to your `astro.config.mjs`:
 
 ```javascript
 import { defineConfig } from 'astro/config';
-import llmsTxt from '@waldheimdev/astro-ai-llms-txt-generator';
+import llmsTxt from '@waldheimdev/astro-ai-llms-txt';
 
 export default defineConfig({
   site: 'https://example.com',
@@ -56,38 +56,43 @@ export default defineConfig({
 ### 🧠 AI Provider Examples
 
 #### Anthropic Claude
+
 ```javascript
 llmsTxt({
   aiProvider: 'claude',
   aiApiKey: process.env.ANTHROPIC_API_KEY,
   aiModel: 'claude-3-5-sonnet-latest',
-})
+});
 ```
 
 #### Google Gemini
+
 ```javascript
 llmsTxt({
   aiProvider: 'gemini',
   aiApiKey: process.env.GEMINI_API_KEY,
   aiModel: 'gemini-1.5-flash',
-})
+});
 ```
 
 #### Local LLM (Ollama)
+
 ```javascript
 llmsTxt({
   aiProvider: 'ollama',
   aiModel: 'llama3', // Ensure this model is pulled in Ollama
-})
+});
 ```
 
 #### CLI Tool Provider
+
 Use any CLI tool that accepts a prompt + text via stdin and returns the summary on stdout.
+
 ```javascript
 llmsTxt({
   aiProvider: 'cli',
-  cliCommand: 'gemini summarize', 
-})
+  cliCommand: 'gemini summarize',
+});
 ```
 
 ## ⚙️ Configuration Options
