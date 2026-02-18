@@ -86,7 +86,6 @@ async function processFile(
     if (aiProvider) {
       try {
         const summaryOptions: AISummaryOptions = {
-          // @ts-expect-error - Logger compatibility
           logger,
           provider: aiProvider,
           apiKey: aiApiKey || '',
