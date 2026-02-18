@@ -8,10 +8,10 @@ import crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
 
 interface AstroLogger {
-  info: (message: string) => void;
-  warn: (message: string) => void;
-  error: (message: string) => void;
-  debug: (message: string) => void;
+  info: (...args: any[]) => void;
+  warn: (...args: any[]) => void;
+  error: (...args: any[]) => void;
+  debug: (...args: any[]) => void;
 }
 
 /**
