@@ -185,13 +185,7 @@ export async function getGeminiSummary({
     logger.debug(`[GENAI-DEBUG] Using Google Gemini API with model: ${usedModel}`);
     const ai = new GoogleGenAI({ apiKey });
 
-    const config: {
-      thinkingConfig?: {
-        includeThoughts: boolean;
-        thinkingLevel?: string;
-        thinkingBudget?: number;
-      };
-    } = {};
+    const config: any = {};
     if (thinkingLevel || thinkingBudget) {
       config.thinkingConfig = {
         includeThoughts: false,
@@ -206,7 +200,9 @@ export async function getGeminiSummary({
       contents: `${prompt}\n\n${text}`,
       config,
     });
-    const response = (typeof result.text === 'function' ? result.text() : result.text) || '';
+    // Handle both property (getter) and method for 'text' to be compatible with different SDK versions
+    const resAny = result as any;
+    const response = (typeof resAny.text === 'function' ? resAny.text() : resAny.text) || '';
     logger.debug(`[GENAI-DEBUG] Result: ${response.substring(0, 100)}...`);
     return response;
   } catch (e) {
