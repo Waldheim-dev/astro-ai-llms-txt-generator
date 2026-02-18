@@ -140,7 +140,9 @@ export async function getGeminiSummary({
   try {
     const usedModel = model || 'gemini-1.5-flash';
     logger.debug(`[GENAI-DEBUG] Using Google Gemini API with model: ${usedModel}`);
+    // @ts-expect-error - SDK type definitions might be inconsistent with the version
     const ai = new GoogleGenAI(apiKey);
+    // @ts-expect-error - SDK type definitions might be inconsistent with the version
     const modelInstance = ai.getGenerativeModel({ model: usedModel });
     const result = await modelInstance.generateContent([prompt, text]);
     const response = result.response.text().trim();
@@ -236,7 +238,7 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
   const { logger, provider, apiKey, model, prompt, text, cacheDir, debug } = options;
   // Fallback-Logger für Debug-Ausgaben
   function debugLog(...args: unknown[]) {
-    if (!logger && typeof logger.debug !== 'function' && debug) {
+    if ((!logger || typeof logger.debug !== 'function') && debug) {
       // Schreibe Debug-Ausgaben immer auf die Konsole, unabhängig vom Astro-Logger
       console.debug('[LLMS-TXT-DEBUG]', ...args);
       return;
