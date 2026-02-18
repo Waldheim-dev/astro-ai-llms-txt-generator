@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { extractTagText, extractMetaContent } from '../src/extractHtml';
+import {
+  extractTagText,
+  extractMetaContent,
+  extractHtmlContent,
+  extractTagContent,
+  extractAllTagsText,
+} from '../src/extractHtml';
 
-describe('extractHtml helpers', () => {
+describe('extractHtml', () => {
   const html = `
     <html>
       <head>
@@ -9,28 +15,43 @@ describe('extractHtml helpers', () => {
         <meta name="description" content="Test Description">
       </head>
       <body>
-        <h1>Headline</h1>
-        <p>First paragraph.</p>
-        <h2>Section</h2>
-        <h3>Subsection</h3>
-        <p>Second paragraph.</p>
+        <h1>Main Heading</h1>
+        <h2>Sub 1</h2>
+        <h2>Sub 2</h2>
+        <p>Paragraph 1</p>
+        <p>Paragraph 2</p>
+        <div><span>Inner</span></div>
       </body>
     </html>
   `;
 
-  it('extracts title tag', () => {
+  it('extractTagText returns trimmed text', () => {
     expect(extractTagText(html, 'title')).toBe('Test Title');
+    expect(extractTagText(html, 'h1')).toBe('Main Heading');
+    expect(extractTagText(html, 'unknown')).toBe('');
   });
 
-  it('extracts meta description', () => {
+  it('extractAllTagsText returns all occurrences', () => {
+    expect(extractAllTagsText(html, 'h2')).toEqual(['Sub 1', 'Sub 2']);
+    expect(extractAllTagsText(html, 'p')).toEqual(['Paragraph 1', 'Paragraph 2']);
+  });
+
+  it('extractMetaContent returns content attribute', () => {
     expect(extractMetaContent(html, 'description')).toBe('Test Description');
+    expect(extractMetaContent(html, 'keywords')).toBe('');
   });
 
-  it('extracts h1 tag', () => {
-    expect(extractTagText(html, 'h1')).toBe('Headline');
+  it('extractHtmlContent returns full object', () => {
+    const result = extractHtmlContent(html, '/blog/test');
+    expect(result.title).toBe('Test Title');
+    expect(result.description).toBe('Test Description');
+    expect(result.headings).toContain('Main Heading');
+    expect(result.headings).toContain('Sub 1');
+    expect(result.paragraphs).toContain('Paragraph 1');
+    expect(result.section).toBe('blog');
   });
 
-  it('extracts first p tag', () => {
-    expect(extractTagText(html, 'p')).toBe('First paragraph.');
+  it('extractTagContent returns inner HTML', () => {
+    expect(extractTagContent(html, 'div')).toBe('<span>Inner</span>');
   });
 });

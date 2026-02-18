@@ -6,7 +6,7 @@ import {
   getFullLlmsTxtPrompt,
 } from './prompt.js';
 import { AISummaryOptions, generateAISummary } from './aiProvider.js';
-import { extractMetaContent, extractTagText } from './extractHtml.js';
+import { extractAllTagsText, extractMetaContent, extractTagText } from './extractHtml.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import fg from 'fast-glob';
@@ -90,15 +90,9 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
                 const h1 = extractTagText(html, 'h1');
 
                 // Content extraction with fallbacks
-                const h2s = Array.from(html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi))
-                  .map((m) => m[1].trim())
-                  .join('\n');
-                const h3s = Array.from(html.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi))
-                  .map((m) => m[1].trim())
-                  .join('\n');
-                const allPs = Array.from(html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
-                  .map((m) => m[1].trim())
-                  .join(' ');
+                const h2s = extractAllTagsText(html, 'h2').join('\n');
+                const h3s = extractAllTagsText(html, 'h3').join('\n');
+                const allPs = extractAllTagsText(html, 'p').join(' ');
 
                 const kiInput = [title, h1, h2s, h3s, allPs].filter(Boolean).join('\n');
                 const kiInputShort =
