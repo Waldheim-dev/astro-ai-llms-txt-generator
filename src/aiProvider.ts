@@ -20,12 +20,6 @@ export interface AISummaryOptions {
 /**
  * Generates a summary using OpenAI API.
  * @param params Parameter object: apiKey, model, prompt, text
- * @param params.apiKey OpenAI API key
- * @param params.model Model name
- * @param params.prompt Prompt for the summary
- * @param params.text Text to summarize
- * @param params.logger Logger instance
- * @returns Summary string
  */
 export async function getOpenAISummary({
   apiKey,
@@ -41,21 +35,22 @@ export async function getOpenAISummary({
   logger;
 }): Promise<string> {
   try {
-    logger.debug(`[OPENAI-DEBUG] Using OpenAI API with model: ${model || 'gpt-4o'}`);
-    logger.debug(`[OPENAI-DEBUG] Prompt: ${prompt}`);
-    logger.debug(
-      `[OPENAI-DEBUG] Input (first part): ${text.substring(0, 500)}... (Length: ${text.length})`
-    );
+    const usedModel = model || 'gpt-4o-mini';
+    logger.debug(`[OPENAI-DEBUG] Using OpenAI API with model: ${usedModel}`);
     const client = new OpenAI({ apiKey });
-    const completion = await client.responses.create({
-      model: model || 'gpt-4o',
-      instructions: prompt,
-      input: text,
+    const completion = await client.chat.completions.create({
+      model: usedModel,
+      messages: [
+        { role: 'system', content: prompt },
+        { role: 'user', content: text },
+      ],
       temperature: 0.5,
     });
-    logger.debug(`[OPENAI-DEBUG] RAW response: ${JSON.stringify(completion)}`);
-    return completion.output_text?.trim() || '';
-  } catch {
+    const result = completion.choices[0]?.message?.content?.trim() || '';
+    logger.debug(`[OPENAI-DEBUG] Result: ${result.substring(0, 100)}...`);
+    return result;
+  } catch (e) {
+    logger.error(`[OPENAI-ERROR] ${e instanceof Error ? e.message : String(e)}`);
     return '';
   }
 }
@@ -63,12 +58,6 @@ export async function getOpenAISummary({
 /**
  * Generates a summary using Google Gemini API.
  * @param params Parameter object: apiKey, model, prompt, text
- * @param params.apiKey Gemini API key
- * @param params.model Model name
- * @param params.prompt Prompt for the summary
- * @param params.text Text to summarize
- * @param params.logger Logger instance
- * @returns Summary string
  */
 export async function getGeminiSummary({
   apiKey,
@@ -84,21 +73,16 @@ export async function getGeminiSummary({
   logger;
 }): Promise<string> {
   try {
-    logger.debug(
-      `[GENAI-DEBUG] Using Google Gemini API with model: ${model || 'gemini-2.5-flash-light'}`
-    );
-    logger.debug(`[GENAI-DEBUG] Prompt: ${prompt}`);
-    logger.debug(
-      `[GENAI-DEBUG] Input (first part): ${text.substring(0, 500)}... (Length: ${text.length})`
-    );
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: model || 'gemini-2.5-flash-light',
-      contents: `${prompt}\n${text}`,
-    });
-    logger.debug(`[GENAI-DEBUG] RAW response: ${JSON.stringify(response)}`);
-    return response.text?.trim() || '';
-  } catch {
+    const usedModel = model || 'gemini-1.5-flash';
+    logger.debug(`[GENAI-DEBUG] Using Google Gemini API with model: ${usedModel}`);
+    const ai = new GoogleGenAI(apiKey);
+    const modelInstance = ai.getGenerativeModel({ model: usedModel });
+    const result = await modelInstance.generateContent([prompt, text]);
+    const response = result.response.text().trim();
+    logger.debug(`[GENAI-DEBUG] Result: ${response.substring(0, 100)}...`);
+    return response;
+  } catch (e) {
+    logger.error(`[GENAI-ERROR] ${e instanceof Error ? e.message : String(e)}`);
     return '';
   }
 }

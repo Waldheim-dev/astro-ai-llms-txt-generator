@@ -7,10 +7,11 @@ import {
 } from './prompt.js';
 import { AISummaryOptions, generateAISummary } from './aiProvider.js';
 import { extractMetaContent, extractTagText } from './extractHtml.js';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import fg from 'fast-glob';
 import { fileURLToPath } from 'node:url';
+import pLimit from 'p-limit';
 
 /**
  * Astro Integration: llms.txt Generator
@@ -32,115 +33,141 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
     aiApiKey = '',
     aiModel = 'llama3',
     aiUrl = '',
+    concurrency = 5,
   } = options;
 
   return {
     name: 'llms-txt',
     hooks: {
-      'astro:build:done': async ({ dir, logger }: { dir: string; logger }) => {
+      'astro:build:done': async ({ dir, logger }: { dir: URL; logger: any }) => {
         const distPath = fileURLToPath(dir);
         const resolvedDistPath = path.resolve(distPath);
         const htmlFiles = await fg('**/*.html', { cwd: resolvedDistPath, absolute: true });
-        if (!htmlFiles.length) throw new Error('Build aborted: No HTML files found.');
+        
+        if (!htmlFiles.length) {
+          logger.warn('No HTML files found. Skipping llms.txt generation.');
+          return;
+        }
 
         const cacheDir = path.join(resolvedDistPath, '.llms-txt-cache');
-        if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
+        if (!fs.existsSync(cacheDir)) {
+          fs.mkdirSync(cacheDir, { recursive: true });
+        }
+
         const baseUrl = site ? site.replace(/\/$/, '') : '';
-        // Prompt für Hauptbeschreibung (H1 + Blockquote)
+        
+        // Prompts
         const mainPrompt = getMainSummaryPrompt(language);
-        // Prompt für Detailabschnitt
         const detailsPrompt = getDetailsPrompt(language);
-        // Prompt für File-List-Sektion
         const fileListPrompt = getFileListPrompt(language);
-        // Prompt für Optional-Sektion
-        // Fallback für komplette llms.txt
         const fullPrompt = getFullLlmsTxtPrompt(language);
+
+        const limit = pLimit(concurrency || 5);
+
         const pageInfos = await Promise.all(
-          htmlFiles.map(async (file: string) => {
-            const html = fs.readFileSync(file, 'utf-8');
-            let relUrl = path.relative(resolvedDistPath, file).replace(/\\/g, '/');
-            if (!relUrl.startsWith('/')) relUrl = `/${relUrl}`;
-            relUrl = relUrl.replace(/index\.html$/, '');
-            relUrl = relUrl.replace(/^\/dist\//, '/');
-            relUrl = relUrl.replace(/\/+/g, '/');
-            const fullUrl = baseUrl + relUrl;
-
-            const title = extractTagText(html, 'title');
-            const metaDescription = extractMetaContent(html, 'description');
-            const h1 = extractTagText(html, 'h1');
-            const h2s = Array.from(html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi))
-              .map((m) => m[1].trim())
-              .join('\n');
-            const h3s = Array.from(html.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi))
-              .map((m) => m[1].trim())
-              .join('\n');
-            const allPs = Array.from(html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
-              .map((m) => m[1].trim())
-              .join(' ');
-            const kiInput = [title, h1, h2s, h3s, allPs].filter(Boolean).join('\n');
-            const kiInputShort =
-              kiInput.length > maxInputLength ? kiInput.slice(0, maxInputLength) : kiInput;
-            // ...existing code...
-
-            // Prompt-Auswahl je nach Abschnitt
-            let promptToUse = fullPrompt;
-            if (title || h1) promptToUse = mainPrompt;
-            else if (h2s || h3s) promptToUse = fileListPrompt;
-            else if (allPs) promptToUse = detailsPrompt;
-
-            let summary = metaDescription || extractTagText(html, 'p');
-            if (aiProvider && summary) {
+          htmlFiles.map((file: string) => 
+            limit(async () => {
               try {
-                const summaryOptions: AISummaryOptions = {
-                  logger,
-                  provider: aiProvider,
-                  apiKey: aiApiKey,
-                  model: aiModel,
-                  prompt: promptToUse,
-                  text: kiInputShort,
-                  aiUrl,
-                  cacheDir,
-                  debug: options.debug || false,
+                const html = fs.readFileSync(file, 'utf-8');
+                let relUrl = path.relative(resolvedDistPath, file).replace(/\\/g, '/');
+                if (!relUrl.startsWith('/')) relUrl = `/${relUrl}`;
+                relUrl = relUrl.replace(/index\.html$/, '');
+                relUrl = relUrl.replace(/^\/dist\//, '/');
+                relUrl = relUrl.replace(/\/+/g, '/');
+                const fullUrl = baseUrl + relUrl;
+
+                const title = extractTagText(html, 'title');
+                const metaDescription = extractMetaContent(html, 'description');
+                const h1 = extractTagText(html, 'h1');
+                
+                // Content extraction with fallbacks
+                const h2s = Array.from(html.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi))
+                  .map((m) => m[1].trim())
+                  .join('\n');
+                const h3s = Array.from(html.matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>/gi))
+                  .map((m) => m[1].trim())
+                  .join('\n');
+                const allPs = Array.from(html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi))
+                  .map((m) => m[1].trim())
+                  .join(' ');
+
+                const kiInput = [title, h1, h2s, h3s, allPs].filter(Boolean).join('\n');
+                const kiInputShort =
+                  kiInput.length > maxInputLength ? kiInput.slice(0, maxInputLength) : kiInput;
+
+                // Prompt selection logic
+                let promptToUse = fullPrompt;
+                if (title || h1) promptToUse = mainPrompt;
+                else if (h2s || h3s) promptToUse = fileListPrompt;
+                else if (allPs) promptToUse = detailsPrompt;
+
+                let summary = metaDescription || '';
+                
+                if (aiProvider) {
+                  try {
+                    const summaryOptions: AISummaryOptions = {
+                      logger,
+                      provider: aiProvider,
+                      apiKey: aiApiKey,
+                      model: aiModel,
+                      prompt: promptToUse,
+                      text: kiInputShort,
+                      aiUrl,
+                      cacheDir,
+                      debug: options.debug || false,
+                    };
+                    const aiSummary = await generateAISummary(summaryOptions);
+                    if (aiSummary) summary = aiSummary;
+                  } catch (e) {
+                    logger.error(`Error generating AI summary for ${relUrl}: ${e instanceof Error ? e.message : String(e)}`);
+                  }
+                }
+
+                return { 
+                  url: fullUrl, 
+                  title: title || h1 || relUrl, 
+                  summary: summary.trim(),
+                  relUrl
                 };
-                summary = await generateAISummary(summaryOptions);
               } catch (e) {
-                // Fehlerbehandlung
-                logger.error(
-                  `Error generating AI summary: ${e instanceof Error ? e.message : String(e)}`
-                );
+                logger.error(`Failed to process ${file}: ${e instanceof Error ? e.message : String(e)}`);
+                return null;
               }
-            }
-            return { url: fullUrl, title: title || h1, summary };
-          })
+            })
+          )
         );
 
-        const validPages = pageInfos.filter(
-          (info: { summary?: string }) => info.summary && info.summary.trim().length > 0
+        const validPages = pageInfos.filter((info): info is NonNullable<typeof info> => 
+          info !== null && info.summary.length > 0
         );
-        if (!validPages.length)
-          throw new Error('Build aborted: No AI responses/summaries received.');
 
-        const sectionMap = new Map();
-        pageInfos.forEach((info) => {
-          const execResult = /^\/([^/]+)\//.exec(
-            (info as { url: string }).url.replace(baseUrl, '')
-          );
-          const section = execResult ? execResult[1] : 'Allgemein';
+        if (!validPages.length) {
+          logger.warn('No valid summaries generated. llms.txt will be empty or not generated.');
+          return;
+        }
+
+        const sectionMap = new Map<string, typeof validPages>();
+        validPages.forEach((info) => {
+          const sectionMatch = /^\/([^/]+)\//.exec(info.relUrl);
+          const section = sectionMatch ? sectionMatch[1] : 'General';
           if (!sectionMap.has(section)) sectionMap.set(section, []);
-          sectionMap.get(section).push(info);
+          sectionMap.get(section)!.push(info);
         });
 
         let llmsTxtContent = `# ${projectName}\n\n`;
         llmsTxtContent += `> ${description}\n\n`;
-        Array.from(sectionMap.entries()).forEach(([section, entries]) => {
+
+        for (const [section, entries] of sectionMap.entries()) {
           llmsTxtContent += `## ${section.charAt(0).toUpperCase() + section.slice(1)}\n\n`;
-          entries.forEach((info: { url: string; title: string; summary: string }) => {
-            llmsTxtContent += `- [${info.url}](${info.url}): ${info.title} ${info.summary}\n`;
-          });
+          for (const info of entries) {
+            llmsTxtContent += `- [${info.title}](${info.url}): ${info.summary}\n`;
+          }
           llmsTxtContent += '\n';
-        });
+        }
+
         const outPath = path.join(distPath, 'llms.txt');
         fs.writeFileSync(outPath, llmsTxtContent, { encoding: 'utf8' });
+        logger.info(`Generated llms.txt at ${outPath}`);
       },
     },
   };

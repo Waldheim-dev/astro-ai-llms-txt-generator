@@ -10,4 +10,5 @@ export interface LlmsTxtOptions {
   maxInputLength?: number;
   language?: string; // z.B. 'de', 'en', 'fr', Default: 'en'
   debug?: boolean;
+  concurrency?: number;
 }

@@ -1,105 +1,68 @@
-# 🚀 @waldheimdev/astro-ai-llms-txt
+# @waldheimdev/astro-ai-llms-txt-generator
 
-✨ Astro Integration: llms.txt Generator ✨
+An Astro integration that automatically generates an LLM-optimized `llms.txt` file in your build output. It uses AI (OpenAI, Google Gemini, or Ollama) to summarize your pages, making them perfectly digestible for Large Language Models.
 
-This plugin magically creates a KI-optimized `llms.txt` in your build output on every Astro build!  
-Perfect for SEO, AI crawlers, and anyone who loves content. 🦾📈
+Follows the [llms.txt](https://llmstxt.org/) standard.
 
-## 🌟 Features
+## Features
 
-- 🏷️ Extracts title, description, H1, H2, H3, and all `<p>` texts from HTML
-- 🤖 AI-powered summarization via Ollama, OpenAI, or Gemini (provider/model/key/endpoint configurable)
-- 🗄️ AI response caching (SHA256, `.llms-txt-cache` in `dist`)
-- 🗂️ Groups entries by root web section (e.g. `/blog/`, `/services/`)
-- 🛡️ Robust path normalization (OS-independent)
-- 🪲 Debug logging, error detection, build abort on errors
+- 🤖 **AI-Powered Summarization**: Uses OpenAI, Google Gemini, or local Ollama models.
+- 📂 **Automatic Sectioning**: Groups pages by their root directories (e.g., `/blog/`, `/docs/`).
+- ⚡ **Concurrency Control**: Limit simultaneous AI requests to avoid rate limits.
+- 💾 **Caching**: AI responses are cached locally to speed up subsequent builds and save costs.
+- 🌍 **Multi-language Support**: Customize prompts based on your site's language.
+- 🛠️ **Robust & Fast**: Built with TypeScript and optimized for Astro 5+.
 
-## ⚡ Installation
+## Installation
 
 ```bash
-# npm
-npm install @waldheimdev/astro-ai-llms-txt
-# pnpm
-pnpm add @waldheimdev/astro-ai-llms-txt
-# yarn
-yarn add @waldheimdev/astro-ai-llms-txt
-# bun
-bun add @waldheimdev/astro-ai-llms-txt
+npm install @waldheimdev/astro-ai-llms-txt-generator
 ```
 
-## 🎉 Usage
+## Usage
 
-Add the plugin to your `astro.config.mjs` and let the magic begin:
+Add the integration to your `astro.config.mjs`:
 
-```js
-import llmsTxt from '@waldheimdev/astro-ai-llms-txt';
+```javascript
+import { defineConfig } from 'astro/config';
+import llmsTxt from '@waldheimdev/astro-ai-llms-txt-generator';
 
-export default {
+export default defineConfig({
+  site: 'https://example.com',
   integrations: [
     llmsTxt({
-      projectName: '🚀 My Project',
-      description: 'KI-optimized overview for LLMs. 🧠',
-      aiProvider: 'ollama', // 'openai' | 'gemini' | 'ollama'
-      aiApiKey: '', // API key for OpenAI/Gemini
-      aiModel: 'llama3', // Model name for provider
-      site: 'https://my-domain.com', // Base URL for links
-      maxInputLength: 8000, // Optional: max length for AI input
+      projectName: 'My Awesome Project',
+      description: 'A deep dive into awesome things.',
+      aiProvider: 'openai', // 'openai', 'gemini', or 'ollama'
+      aiApiKey: process.env.OPENAI_API_KEY,
+      aiModel: 'gpt-4o-mini',
+      concurrency: 5,
     }),
   ],
-};
+});
 ```
 
-### All Options
+## Configuration Options
 
-| Option           | Type   | Default                           | Description                                          |
-| ---------------- | ------ | --------------------------------- | ---------------------------------------------------- |
-| `projectName`    | string | 'My Project'                      | Name for the llms.txt header                         |
-| `description`    | string | 'KI-optimized overview for LLMs.' | Description for llms.txt header                      |
-| `aiProvider`     | string | 'ollama'                          | AI provider: 'ollama', 'openai', or 'gemini'         |
-| `aiApiKey`       | string | ''                                | API key for OpenAI or Gemini (not needed for Ollama) |
-| `aiModel`        | string | 'llama3'                          | Model name for the selected provider                 |
-| `aiUrl`          | string | ''                                | Custom endpoint for Ollama (optional)                |
-| `site`           | string | ''                                | Base URL for links in llms.txt                       |
-| `maxInputLength` | number | 8000                              | Maximum input length for AI summarization            |
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `projectName` | `string` | `'Projectname'` | The H1 title of your llms.txt. |
+| `description` | `string` | `'Automatically generated...'` | The blockquote description. |
+| `site` | `string` | `''` | Your site's base URL (inherited from Astro config). |
+| `aiProvider` | `string` | `'ollama'` | `openai`, `gemini`, or `ollama`. |
+| `aiApiKey` | `string` | `''` | API key for the selected provider. |
+| `aiModel` | `string` | `'llama3'` | Model name to use for summarization. |
+| `concurrency` | `number` | `5` | Max simultaneous AI requests. |
+| `language` | `string` | `'en'` | Prompt language (`en`, `de`, etc.). |
+| `maxInputLength`| `number` | `8000` | Max characters sent to the AI per page. |
+| `debug` | `boolean` | `false` | Enable verbose logging. |
 
-## 📦 Output
+## CI/CD
 
-After every Astro build you'll find in `dist/`:
+This repository includes GitHub Actions for:
+- **Linting & Testing**: Runs on every PR and push to main.
+- **Automated Releases**: Uses `semantic-release` to publish to npm and GitHub.
 
-- `llms.txt` – Your KI-optimized overview of all pages ✨
-- `.llms-txt-cache/` – Cache for AI responses 🗄️
+## License
 
-## 🛠️ Extending
-
-- Want more AI providers? Just add them in `src/aiProvider.ts`! 🧩
-- Tests & coverage: `npm test` ✅
-- Linting: `npm run lint` 🧹
-
-## 📝 Example llms.txt
-
-```
-# 🚀 My Project
-
-> KI-optimized overview for LLMs. 🧠
-
-## Blog
-
-- [/blog/post-1]: Post title summary...
-- [/blog/post-2]: Post title summary...
-
-## Services
-
-- [/services/web]: Web service summary...
-```
-
----
-
-**Note:** `llms.txt` complements existing standards like `robots.txt` and `sitemap.xml`, providing LLMs with a curated, AI-optimized overview. Learn more at [llmstxt.org](https://llmstxt.org/)
-
-Made with ❤️ for Astro & AI enthusiasts!
-
-## Need help or find a bug?
-
-Please open an issue on [GitLab](https://gitlab.com/waldheimdev/astro-ai-llms.txt/-/issues) or submit a merge request. We appreciate your feedback!
-
-Or [contact me](https://waldheim.dev/kontakt) on my Website. You need my service? [Let's talk!](https://waldheim.dev/kontakt)
+MIT © [Waldheim-dev](https://github.com/Waldheim-dev)
