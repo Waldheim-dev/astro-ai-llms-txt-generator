@@ -18,10 +18,12 @@ describe('Logger fix verification', () => {
     expect(protoInstance.error).toBeDefined();
 
     // Mock getOpenAISummary to check the logger it receives
-    const getOpenAISummarySpy = vi.spyOn(aiProvider, 'getOpenAISummary').mockImplementation(async ({ logger }) => {
-      logger.error('test error');
-      return 'summary';
-    });
+    const getOpenAISummarySpy = vi
+      .spyOn(aiProvider, 'getOpenAISummary')
+      .mockImplementation(async ({ logger }) => {
+        logger.error('test error');
+        return 'summary';
+      });
 
     const opts: AISummaryOptions = {
       logger: protoInstance,

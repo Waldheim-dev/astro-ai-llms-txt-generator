@@ -27,13 +27,11 @@ vi.mock('openai', () => ({
 
 vi.mock('@google/genai', () => ({
   GoogleGenAI: class {
-    getGenerativeModel = vi.fn().mockReturnValue({
+    models = {
       generateContent: vi.fn().mockResolvedValue({
-        response: {
-          text: () => 'gemini-summary',
-        },
+        text: () => 'gemini-summary',
       }),
-    });
+    };
     constructor() {}
   },
 }));

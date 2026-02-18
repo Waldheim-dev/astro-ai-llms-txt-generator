@@ -7,10 +7,9 @@
 
 ## [1.2.1](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.2.0...v1.2.1) (2026-02-18)
 
-
 ### Bug Fixes
 
-* refactor HTML extraction to use cheerio instead of regex for better robustness ([3f2177c](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/3f2177cf5e8adbfd37af8d6db29b00d8d450fa71))
+- refactor HTML extraction to use cheerio instead of regex for better robustness ([3f2177c](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/3f2177cf5e8adbfd37af8d6db29b00d8d450fa71))
 
 # [1.2.0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.1.3...v1.2.0) (2026-02-18)
 

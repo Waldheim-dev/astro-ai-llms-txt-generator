@@ -45,21 +45,21 @@ export function generateLlmsTxtContent(
   // Sort sections alphabetically for consistent output
   const sortedSections = Array.from(sectionMap.keys()).sort();
 
-  for (const section of sortedSections) {
+  sortedSections.forEach((section) => {
     const entries = sectionMap.get(section)!;
 
     // Add section header to short content
     shortContent += `## ${section.charAt(0).toUpperCase() + section.slice(1)}\n\n`;
 
-    for (const info of entries) {
+    entries.forEach((info) => {
       shortContent += `- [${info.title}](${info.url}): ${info.summary}\n`;
 
       if (fullContent && info.fullContent) {
         fullContent += `## ${info.title}\n\nURL: ${info.url}\n\n${info.fullContent}\n\n---\n\n`;
       }
-    }
+    });
     shortContent += '\n';
-  }
+  });
 
   return { short: shortContent, full: fullContent };
 }

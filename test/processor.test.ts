@@ -40,8 +40,10 @@ describe('processor', () => {
   it('processes files and returns valid page info', async () => {
     const htmlFiles = ['/dist/index.html', '/dist/blog/post.html'];
     const resolvedDistPath = '/dist';
-    
-    (fs.readFileSync as any).mockReturnValue('<html><title>Test</title><body><p>Content</p></body></html>');
+
+    (fs.readFileSync as any).mockReturnValue(
+      '<html><title>Test</title><body><p>Content</p></body></html>'
+    );
 
     const result = await processAllFiles(htmlFiles, resolvedDistPath, options, logger, '/cache');
 
@@ -75,5 +77,37 @@ describe('processor', () => {
 
     expect(result).toHaveLength(0);
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Failed to process'));
+  });
+
+  it('uses environment variables as fallback for API keys', async () => {
+    const { generateAISummary } = await import('../src/aiProvider');
+    const htmlFiles = ['/dist/test.html'];
+    (fs.readFileSync as any).mockReturnValue('<html><title>Test</title></html>');
+
+    // Test Gemini
+    process.env.GEMINI_API_KEY = 'gemini-env-key';
+    await processAllFiles(htmlFiles, '/dist', { aiProvider: 'gemini' }, logger, '/cache');
+    expect(generateAISummary).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKey: 'gemini-env-key' })
+    );
+
+    // Test OpenAI
+    process.env.OPENAI_API_KEY = 'openai-env-key';
+    await processAllFiles(htmlFiles, '/dist', { aiProvider: 'openai' }, logger, '/cache');
+    expect(generateAISummary).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKey: 'openai-env-key' })
+    );
+
+    // Test Claude
+    process.env.ANTHROPIC_API_KEY = 'claude-env-key';
+    await processAllFiles(htmlFiles, '/dist', { aiProvider: 'claude' }, logger, '/cache');
+    expect(generateAISummary).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKey: 'claude-env-key' })
+    );
+
+    // Cleanup
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.ANTHROPIC_API_KEY;
   });
 });

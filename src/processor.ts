@@ -86,19 +86,19 @@ async function processFile(
     if (aiProvider) {
       try {
         // Fallback to environment variables if no API key is provided in options
-        const envKey =
-          aiProvider === 'gemini'
-            ? process.env.GEMINI_API_KEY
-            : aiProvider === 'openai'
-              ? process.env.OPENAI_API_KEY
-              : aiProvider === 'claude'
-                ? process.env.ANTHROPIC_API_KEY
-                : '';
+        let envKey = '';
+        if (aiProvider === 'gemini') {
+          envKey = process.env.GEMINI_API_KEY || '';
+        } else if (aiProvider === 'openai') {
+          envKey = process.env.OPENAI_API_KEY || '';
+        } else if (aiProvider === 'claude') {
+          envKey = process.env.ANTHROPIC_API_KEY || '';
+        }
 
         const summaryOptions: AISummaryOptions = {
           logger,
           provider: aiProvider,
-          apiKey: aiApiKey || envKey || '',
+          apiKey: aiApiKey || envKey,
           model: aiModel || '',
           prompt: promptToUse,
           text: kiInputShort,

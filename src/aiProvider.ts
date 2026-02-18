@@ -159,6 +159,8 @@ export async function getOpenAISummary({
  * @param params.prompt - The prompt.
  * @param params.text - The text to summarize.
  * @param params.logger - The logger instance.
+ * @param params.thinkingLevel - The thinking level (optional).
+ * @param params.thinkingBudget - The thinking budget (optional).
  * @returns The generated summary.
  */
 export async function getGeminiSummary({
@@ -183,7 +185,13 @@ export async function getGeminiSummary({
     logger.debug(`[GENAI-DEBUG] Using Google Gemini API with model: ${usedModel}`);
     const ai = new GoogleGenAI({ apiKey });
 
-    const config: any = {};
+    const config: {
+      thinkingConfig?: {
+        includeThoughts: boolean;
+        thinkingLevel?: string;
+        thinkingBudget?: number;
+      };
+    } = {};
     if (thinkingLevel || thinkingBudget) {
       config.thinkingConfig = {
         includeThoughts: false,
