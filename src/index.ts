@@ -34,6 +34,8 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
     aiModel = 'llama3',
     aiUrl = '',
     concurrency = 5,
+    llmsFull = false,
+    cliCommand = '',
   } = options;
 
   return {
@@ -115,6 +117,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
                       aiUrl,
                       cacheDir,
                       debug: options.debug || false,
+                      cliCommand,
                     };
                     const aiSummary = await generateAISummary(summaryOptions);
                     if (aiSummary) summary = aiSummary;
@@ -127,7 +130,8 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
                   url: fullUrl, 
                   title: title || h1 || relUrl, 
                   summary: summary.trim(),
-                  relUrl
+                  relUrl,
+                  fullContent: kiInput // Store full content for llms-full.txt
                 };
               } catch (e) {
                 logger.error(`Failed to process ${file}: ${e instanceof Error ? e.message : String(e)}`);
@@ -157,10 +161,15 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         let llmsTxtContent = `# ${projectName}\n\n`;
         llmsTxtContent += `> ${description}\n\n`;
 
+        let llmsFullContent = `# ${projectName} - Full Content\n\n`;
+
         for (const [section, entries] of sectionMap.entries()) {
           llmsTxtContent += `## ${section.charAt(0).toUpperCase() + section.slice(1)}\n\n`;
           for (const info of entries) {
             llmsTxtContent += `- [${info.title}](${info.url}): ${info.summary}\n`;
+            if (llmsFull) {
+              llmsFullContent += `## ${info.title}\n\nURL: ${info.url}\n\n${info.fullContent}\n\n---\n\n`;
+            }
           }
           llmsTxtContent += '\n';
         }
@@ -168,6 +177,12 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         const outPath = path.join(distPath, 'llms.txt');
         fs.writeFileSync(outPath, llmsTxtContent, { encoding: 'utf8' });
         logger.info(`Generated llms.txt at ${outPath}`);
+
+        if (llmsFull) {
+          const fullOutPath = path.join(distPath, 'llms-full.txt');
+          fs.writeFileSync(fullOutPath, llmsFullContent, { encoding: 'utf8' });
+          logger.info(`Generated llms-full.txt at ${fullOutPath}`);
+        }
       },
     },
   };

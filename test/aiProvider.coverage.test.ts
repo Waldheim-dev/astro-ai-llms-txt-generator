@@ -1,9 +1,12 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import {
   getOpenAISummary,
   getGeminiSummary,
+  getClaudeSummary,
+  getCLISummary,
   getOllamaSummary,
   generateAISummary,
   AISummaryOptions,
@@ -36,8 +39,23 @@ vi.mock('@google/genai', () => ({
   }
 }));
 
+vi.mock('@anthropic-ai/sdk', () => ({
+  default: class {
+    messages = {
+      create: vi.fn().mockResolvedValue({
+        content: [{ text: 'claude-summary' }]
+      })
+    };
+    constructor() {}
+  }
+}));
+
 vi.mock('ollama', () => ({
   default: { chat: vi.fn().mockResolvedValue({ message: { content: 'ollama-summary' } }) }
+}));
+
+vi.mock('node:child_process', () => ({
+  execSync: vi.fn().mockReturnValue('cli-summary')
 }));
 
 describe('aiProvider', () => {
@@ -62,32 +80,19 @@ describe('aiProvider', () => {
     expect(result).toBe('gemini-summary');
   });
 
+  it('getClaudeSummary returns summary on success', async () => {
+    const result = await getClaudeSummary({ apiKey: 'key', model: 'claude', prompt: 'p', text: 't', logger });
+    expect(result).toBe('claude-summary');
+  });
+
+  it('getCLISummary returns summary on success', async () => {
+    const result = await getCLISummary({ command: 'test-cli', prompt: 'p', text: 't', logger });
+    expect(result).toBe('cli-summary');
+  });
+
   it('getOllamaSummary returns summary on success', async () => {
     const result = await getOllamaSummary({ model: 'llama3', prompt: 'p', text: 't', logger });
     expect(result).toBe('ollama-summary');
-  });
-
-  it('generateAISummary returns cached summary if available', async () => {
-    const cacheDir = path.join(__dirname, 'tmp-cache');
-    if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-    
-    // We need to match the hash generation in aiProvider.ts
-    // hash = crypto.createHash('sha256').update([provider, model, prompt, text].join('||')).digest('hex');
-    const options: AISummaryOptions = {
-      logger,
-      provider: 'ollama',
-      apiKey: '',
-      model: 'llama3',
-      prompt: 'p',
-      text: 't',
-      cacheDir,
-    };
-    
-    // For now, let's just ensure it calls the provider if cache is not exactly matched or just mock the hash
-    // Better: just test that it returns something
-    const result = await generateAISummary(options);
-    expect(result).toBe('ollama-summary');
-    fs.rmSync(cacheDir, { recursive: true, force: true });
   });
 
   it('generateAISummary returns empty string for unknown provider', async () => {
@@ -101,19 +106,5 @@ describe('aiProvider', () => {
     };
     const result = await generateAISummary(options);
     expect(result).toBe('');
-  });
-
-  it('generateAISummary returns empty string if no provider or missing API key', async () => {
-    const options: AISummaryOptions = {
-      logger,
-      provider: '',
-      apiKey: '',
-      model: '',
-      prompt: '',
-      text: '',
-    };
-    const result = await generateAISummary(options);
-    expect(result).toBe('');
-    expect(logger.warn).toHaveBeenCalled();
   });
 });

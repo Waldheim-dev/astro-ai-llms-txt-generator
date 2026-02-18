@@ -1,17 +1,18 @@
 # @waldheimdev/astro-ai-llms-txt-generator
 
-An Astro integration that automatically generates an LLM-optimized `llms.txt` file in your build output. It uses AI (OpenAI, Google Gemini, or Ollama) to summarize your pages, making them perfectly digestible for Large Language Models.
+An Astro integration that automatically generates an LLM-optimized `llms.txt` file in your build output. It uses AI to summarize your pages, making them perfectly digestible for Large Language Models.
 
 Follows the [llms.txt](https://llmstxt.org/) standard.
 
 ## Features
 
-- 🤖 **AI-Powered Summarization**: Uses OpenAI, Google Gemini, or local Ollama models.
+- 🤖 **AI-Powered Summarization**: Uses OpenAI, Google Gemini, Anthropic Claude, or local Ollama models.
+- 💻 **CLI Provider**: Use your favorite CLI tools (like `gemini-cli` or `copilot-cli`) as a provider.
 - 📂 **Automatic Sectioning**: Groups pages by their root directories (e.g., `/blog/`, `/docs/`).
 - ⚡ **Concurrency Control**: Limit simultaneous AI requests to avoid rate limits.
+- 📜 **llms-full.txt**: Optionally generate a full-content version of your site for LLMs.
 - 💾 **Caching**: AI responses are cached locally to speed up subsequent builds and save costs.
 - 🌍 **Multi-language Support**: Customize prompts based on your site's language.
-- 🛠️ **Robust & Fast**: Built with TypeScript and optimized for Astro 5+.
 
 ## Installation
 
@@ -33,13 +34,24 @@ export default defineConfig({
     llmsTxt({
       projectName: 'My Awesome Project',
       description: 'A deep dive into awesome things.',
-      aiProvider: 'openai', // 'openai', 'gemini', or 'ollama'
-      aiApiKey: process.env.OPENAI_API_KEY,
-      aiModel: 'gpt-4o-mini',
-      concurrency: 5,
+      aiProvider: 'claude', // 'openai', 'gemini', 'claude', 'ollama', or 'cli'
+      aiApiKey: process.env.ANTHROPIC_API_KEY,
+      aiModel: 'claude-3-5-sonnet-latest',
+      llmsFull: true, // Also generate llms-full.txt
     }),
   ],
 });
+```
+
+### Using a CLI tool as a provider
+
+If you have a CLI tool that can take a prompt and text via stdin and return a summary, you can use the `cli` provider:
+
+```javascript
+llmsTxt({
+  aiProvider: 'cli',
+  cliCommand: 'gemini-cli summarize', // The tool should accept input via stdin
+})
 ```
 
 ## Configuration Options
@@ -48,12 +60,13 @@ export default defineConfig({
 | :--- | :--- | :--- | :--- |
 | `projectName` | `string` | `'Projectname'` | The H1 title of your llms.txt. |
 | `description` | `string` | `'Automatically generated...'` | The blockquote description. |
-| `site` | `string` | `''` | Your site's base URL (inherited from Astro config). |
-| `aiProvider` | `string` | `'ollama'` | `openai`, `gemini`, or `ollama`. |
+| `aiProvider` | `string` | `'ollama'` | `openai`, `gemini`, `claude`, `ollama`, or `cli`. |
 | `aiApiKey` | `string` | `''` | API key for the selected provider. |
 | `aiModel` | `string` | `'llama3'` | Model name to use for summarization. |
+| `cliCommand` | `string` | `''` | Command to run if `aiProvider` is `cli`. |
+| `llmsFull` | `boolean` | `false` | Whether to generate `llms-full.txt`. |
 | `concurrency` | `number` | `5` | Max simultaneous AI requests. |
-| `language` | `string` | `'en'` | Prompt language (`en`, `de`, etc.). |
+| `language` | `string` | `'en'` | Prompt language (`en`, `de`, `fr`). |
 | `maxInputLength`| `number` | `8000` | Max characters sent to the AI per page. |
 | `debug` | `boolean` | `false` | Enable verbose logging. |
 

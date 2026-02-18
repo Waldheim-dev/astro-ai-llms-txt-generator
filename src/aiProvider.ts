@@ -1,9 +1,11 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import ollama from 'ollama';
 import OpenAI from 'openai';
 import { GoogleGenAI } from '@google/genai';
-import crypto from 'crypto';
+import Anthropic from '@anthropic-ai/sdk';
+import crypto from 'node:crypto';
+import { execSync } from 'node:child_process';
 
 export interface AISummaryOptions {
   logger;
@@ -15,6 +17,69 @@ export interface AISummaryOptions {
   aiUrl?: string;
   cacheDir?: string;
   debug?: boolean;
+  cliCommand?: string;
+}
+
+/**
+ * Generates a summary using Anthropic Claude API.
+ */
+export async function getClaudeSummary({
+  apiKey,
+  model,
+  prompt,
+  text,
+  logger,
+}: {
+  apiKey: string;
+  model: string;
+  prompt: string;
+  text: string;
+  logger;
+}): Promise<string> {
+  try {
+    const usedModel = model || 'claude-3-5-sonnet-latest';
+    logger.debug(`[CLAUDE-DEBUG] Using Anthropic API with model: ${usedModel}`);
+    const anthropic = new Anthropic({ apiKey });
+    const response = await anthropic.messages.create({
+      model: usedModel,
+      max_tokens: 1024,
+      system: prompt,
+      messages: [{ role: 'user', content: text }],
+    });
+    // @ts-ignore
+    const result = response.content[0]?.text?.trim() || '';
+    logger.debug(`[CLAUDE-DEBUG] Result: ${result.substring(0, 100)}...`);
+    return result;
+  } catch (e) {
+    logger.error(`[CLAUDE-ERROR] ${e instanceof Error ? e.message : String(e)}`);
+    return '';
+  }
+}
+
+/**
+ * Generates a summary using a CLI tool.
+ */
+export async function getCLISummary({
+  command,
+  prompt,
+  text,
+  logger,
+}: {
+  command: string;
+  prompt: string;
+  text: string;
+  logger;
+}): Promise<string> {
+  try {
+    logger.debug(`[CLI-DEBUG] Using CLI command: ${command}`);
+    // Pipe text to the command
+    const fullInput = `${prompt}\n\n${text}`;
+    const result = execSync(command, { input: fullInput, encoding: 'utf-8' });
+    return result.trim();
+  } catch (e) {
+    logger.error(`[CLI-ERROR] ${e instanceof Error ? e.message : String(e)}`);
+    return '';
+  }
 }
 
 /**
@@ -225,8 +290,23 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
           text,
           logger: { ...logger, debug: debugLog },
         });
+      case 'claude':
+        return getClaudeSummary({
+          apiKey,
+          model,
+          prompt,
+          text,
+          logger: { ...logger, debug: debugLog },
+        });
       case 'ollama':
         return getOllamaSummary({ model, prompt, text, logger: { ...logger, debug: debugLog } });
+      case 'cli':
+        return getCLISummary({
+          command: options.cliCommand || 'cat',
+          prompt,
+          text,
+          logger: { ...logger, debug: debugLog },
+        });
       default:
         logger.warn('Unknown provider.');
         return '';
