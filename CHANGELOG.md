@@ -1,3 +1,12 @@
+## [1.2.3](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.2.2...v1.2.3) (2026-02-18)
+
+
+### Bug Fixes
+
+* logger delegation, update AI models and add Gemini thinking support ([87c2d64](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/87c2d6498eeaac32e0b55cdff1039973cdd0c5d1))
+* resolve linting errors by using proper Gemini types and avoiding explicit any ([5497a97](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/5497a97ed5a294f1167a2f28857b80e97e8658d7))
+* resolve TypeScript build errors in aiProvider.ts ([df17abc](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/df17abc5370ff29c6b17aa89cc372e7de72b8399))
+
 ## [1.2.2](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.2.1...v1.2.2) (2026-02-18)
 
 
