@@ -14,6 +14,11 @@ Follows the [llms.txt](https://llmstxt.org/) standard.
 - 💾 **Caching**: AI responses are cached locally to speed up subsequent builds and save costs.
 - 🌍 **Multi-language Support**: Customize prompts based on your site's language.
 
+## Requirements
+
+- **Node.js**: 24.x or higher
+- **Astro**: 5.0.0 or higher
+
 ## Installation
 
 ```bash
