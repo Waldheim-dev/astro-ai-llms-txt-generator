@@ -14,10 +14,10 @@ import { fileURLToPath } from 'node:url';
 import pLimit from 'p-limit';
 
 interface AstroLogger {
-  info: (...args: any[]) => void;
-  warn: (...args: any[]) => void;
-  error: (...args: any[]) => void;
-  debug: (...args: any[]) => void;
+  info: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+  debug: (...args: unknown[]) => void;
 }
 
 /**
