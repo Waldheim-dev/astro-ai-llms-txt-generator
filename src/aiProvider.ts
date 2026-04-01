@@ -7,6 +7,41 @@ import Anthropic from '@anthropic-ai/sdk';
 import crypto from 'node:crypto';
 import { execSync } from 'node:child_process';
 
+/**
+ * Tracks providers that have experienced a permanent (non-retryable) failure this build.
+ * Prevents the same auth error from being logged once per page.
+ */
+const permanentlyFailedProviders = new Set<string>();
+
+/** @internal — exported only for test resets between test cases */
+export function _resetProviderFailures(): void {
+  permanentlyFailedProviders.clear();
+}
+
+/** Returns true if the error message indicates a permanent failure (e.g. invalid API key). */
+function isPermanentFailure(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('api_key_invalid') ||
+    lower.includes('invalid_api_key') ||
+    lower.includes('api key not valid') ||
+    lower.includes('authentication_error') ||
+    lower.includes('unauthorized') ||
+    lower.includes('unauthenticated')
+  );
+}
+
+/** Signals a permanent, non-retryable provider failure. */
+class PermanentProviderError extends Error {
+  constructor(
+    message: string,
+    public readonly providerName: string
+  ) {
+    super(message);
+    this.name = 'PermanentProviderError';
+  }
+}
+
 interface AstroLogger {
   info: (...args: unknown[]) => void;
   warn: (...args: unknown[]) => void;
@@ -70,7 +105,9 @@ export async function getClaudeSummary({
     logger.debug(`[CLAUDE-DEBUG] Result: ${result.substring(0, 100)}...`);
     return result;
   } catch (e) {
-    logger.error(`[CLAUDE-ERROR] ${e instanceof Error ? e.message : String(e)}`);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (isPermanentFailure(msg)) throw new PermanentProviderError(msg, 'claude');
+    logger.error(`[CLAUDE-ERROR] ${msg}`);
     return '';
   }
 }
@@ -146,7 +183,9 @@ export async function getOpenAISummary({
     logger.debug(`[OPENAI-DEBUG] Result: ${result.substring(0, 100)}...`);
     return result;
   } catch (e) {
-    logger.error(`[OPENAI-ERROR] ${e instanceof Error ? e.message : String(e)}`);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (isPermanentFailure(msg)) throw new PermanentProviderError(msg, 'openai');
+    logger.error(`[OPENAI-ERROR] ${msg}`);
     return '';
   }
 }
@@ -214,7 +253,9 @@ export async function getGeminiSummary({
     logger.debug(`[GENAI-DEBUG] Result: ${response.substring(0, 100)}...`);
     return response;
   } catch (e) {
-    logger.error(`[GENAI-ERROR] ${e instanceof Error ? e.message : String(e)}`);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (isPermanentFailure(msg)) throw new PermanentProviderError(msg, 'gemini');
+    logger.error(`[GENAI-ERROR] ${msg}`);
     return '';
   }
 }
@@ -332,6 +373,11 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
     );
     return '';
   }
+
+  // Circuit breaker: skip silently if this provider permanently failed earlier this build
+  if (permanentlyFailedProviders.has(provider)) {
+    return '';
+  }
   const hash = crypto
     .createHash('sha256')
     .update([provider, model, prompt, text].join('||'))
@@ -408,7 +454,20 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
   if (cachedSummary) {
     return cachedSummary;
   }
-  const summary = await getProviderSummary();
+  let summary: string;
+  try {
+    summary = await getProviderSummary();
+  } catch (e) {
+    if (e instanceof PermanentProviderError) {
+      permanentlyFailedProviders.add(provider);
+      wrappedLogger.error(`[${provider.toUpperCase()}-ERROR] ${e.message}`);
+      wrappedLogger.warn(
+        `[llms-txt] AI provider '${provider}' failed permanently (e.g. invalid API key). Skipping remaining pages.`
+      );
+      return '';
+    }
+    throw e;
+  }
   if (cacheDir && summary) {
     try {
       fs.writeFileSync(cachePath, JSON.stringify({ summary }), 'utf-8');

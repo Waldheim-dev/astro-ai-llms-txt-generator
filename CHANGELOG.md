@@ -1,3 +1,20 @@
+## [1.3.0] — 2026-04-01
+
+### Features
+
+* **GEO Linter**: Build-time content quality warnings — flags pages with more than 400 words and code fences without a language tag
+* **Astro 5 DataStore Adapter**: Pull content from an Astro 5 DataStore instead of HTML output files (`contentSource: 'datastore' | 'auto'`)
+* **Chunking Pipeline**: Split `llms-full.txt` content into fixed, recursive, structure-aware, or semantic chunks; export as `llms-chunks.jsonl` alongside the build output
+* **MCP Integration**: Auto-generate `.cursor/mcp.json`, `.vscode/mcp.json`, `.mcp.json` at build time; serve a live Model Context Protocol SSE endpoint during `astro dev` (`mcp: true | McpOptions`)
+* **`data-llm` metadata**: Extract structured JSON metadata from `data-llm` attributes on any HTML element and append to `llms-full.txt` as LLM-readable comments
+* **XML full-content format**: `llmsFullFormat: 'xml'` wraps each page in `<document>` tags, compatible with Anthropic prompt format
+* **Optional pages**: Pages with `<meta name="llms-optional" content="true">` are grouped under `## Optional` in `llms.txt`
+
+### Bug Fixes
+
+* Fixed TypeScript static resolution error for optional peer dependency `@xenova/transformers` in `chunker.ts`
+* Fixed `generateAISummary` guard blocking the `cli` provider when no API key is supplied
+
 ## [1.2.3](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.2.2...v1.2.3) (2026-02-18)
 
 

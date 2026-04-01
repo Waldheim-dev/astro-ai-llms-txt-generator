@@ -2,7 +2,7 @@
  * Tests the error/catch paths of every AI provider function in aiProvider.ts.
  * Each provider mock is configured to throw so we exercise the catch branches.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   getOpenAISummary,
   getGeminiSummary,
@@ -10,7 +10,11 @@ import {
   getCLISummary,
   getOllamaSummary,
   generateAISummary,
+  _resetProviderFailures,
 } from '../src/aiProvider';
+
+// Shared mock reference so individual tests can override it with mockRejectedValueOnce
+const mockGenerateContent = vi.fn().mockRejectedValue(new Error('Gemini quota exceeded'));
 
 vi.mock('openai', () => ({
   default: class {
@@ -25,7 +29,7 @@ vi.mock('openai', () => ({
 vi.mock('@google/genai', () => ({
   GoogleGenAI: class {
     models = {
-      generateContent: vi.fn().mockRejectedValue(new Error('Gemini quota exceeded')),
+      generateContent: mockGenerateContent,
     };
   },
 }));
@@ -65,6 +69,11 @@ describe('aiProvider error paths', () => {
     warn: vi.fn(),
     error: vi.fn(),
   };
+
+  beforeEach(() => {
+    _resetProviderFailures();
+    vi.clearAllMocks();
+  });
 
   it('getOpenAISummary returns empty string when API throws', async () => {
     const result = await getOpenAISummary({
@@ -155,5 +164,32 @@ describe('aiProvider error paths', () => {
     expect(result).toBe('');
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();
+  });
+
+  it('generateAISummary logs permanent failure once and skips subsequent pages for gemini', async () => {
+    const permanentError = new Error('API key not valid. Please pass a valid API key. [API_KEY_INVALID]');
+    mockGenerateContent.mockRejectedValueOnce(permanentError);
+
+    const opts = {
+      logger,
+      provider: 'gemini',
+      apiKey: 'bad-key',
+      model: 'gemini-2.0-flash',
+      prompt: 'p',
+      text: 't',
+    };
+    const result1 = await generateAISummary(opts);
+    expect(result1).toBe('');
+    // First call: error logged once + warning about skipping
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Skipping remaining pages'));
+
+    vi.clearAllMocks();
+
+    // Second call: silently skipped — no additional log output
+    const result2 = await generateAISummary({ ...opts, text: 'different page' });
+    expect(result2).toBe('');
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 });
