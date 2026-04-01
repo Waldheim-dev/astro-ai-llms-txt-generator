@@ -1,3 +1,11 @@
+# [1.3.0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.2.3...v1.3.0) (2026-04-01)
+
+
+### Features
+
+* * **GEO Linter**: Build-time content quality warnings — flags pages with more than 400 words and code fences without a language tag ([5f9ddd6](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/5f9ddd68ce3fd34f99f319d9801b4b76ceb0dfb0))
+* add permanent failure handling for AI providers and enhance error logging ([d28f2a2](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/d28f2a2b86a5ad57ef7946c09009a38a168da66f))
+
 ## [1.3.0] — 2026-04-01
 
 ### Features
