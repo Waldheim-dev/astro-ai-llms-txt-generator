@@ -18,43 +18,6 @@ export interface ChunkingOptions {
   similarityThreshold?: number;
 }
 
-/**
- * Splits text content into semantic chunks according to the chosen strategy.
- *
- * Strategies:
- *  - 'none'      : Returns a single chunk containing the full text (default).
- *  - 'fixed'     : Splits at fixed character intervals with configurable overlap.
- *  - 'recursive' : Splits at natural separators (\n\n → \n → space) with overlap.
- *  - 'structure' : Splits on Markdown headings (#, ##, ###); keeps code fences intact.
- *  - 'semantic'  : Groups sentences by cosine similarity of vector embeddings.
- *                  Requires the optional peer @xenova/transformers. Falls back to
- *                  structure chunking when the package is not installed.
- *
- * Each chunk is prefixed with a metadata header so that RAG systems retain context.
- */
-export async function chunkContent(
-  text: string,
-  title: string,
-  filePath: string,
-  options: ChunkingOptions = {}
-): Promise<Chunk[]> {
-  const { strategy = 'none', chunkSize = 1500, chunkOverlap = 200, similarityThreshold = 0.5 } =
-    options;
-
-  switch (strategy) {
-    case 'fixed':
-      return fixedChunk(text, title, filePath, chunkSize, chunkOverlap);
-    case 'recursive':
-      return recursiveChunk(text, title, filePath, chunkSize, chunkOverlap);
-    case 'structure':
-      return structureChunk(text, title, filePath);
-    case 'semantic':
-      return semanticChunk(text, title, filePath, similarityThreshold);
-    default:
-      return [makeChunk(text, title, filePath, 0)];
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -77,7 +40,8 @@ function fixedChunk(
   let index = 0;
   while (start < text.length) {
     const end = Math.min(start + chunkSize, text.length);
-    chunks.push(makeChunk(text.slice(start, end), title, filePath, index++));
+    chunks.push(makeChunk(text.slice(start, end), title, filePath, index));
+    index += 1;
     if (end === text.length) break;
     start += chunkSize - chunkOverlap;
   }
@@ -97,7 +61,8 @@ function recursiveChunk(
 
   function split(str: string): string[] {
     if (str.length <= chunkSize) return [str];
-    for (const sep of separators) {
+    for (let si = 0; si < separators.length; si += 1) {
+      const sep = separators[si];
       const idx = str.lastIndexOf(sep, chunkSize);
       if (idx > 0) {
         const left = str.slice(0, idx);
@@ -122,21 +87,21 @@ function structureChunk(text: string, title: string, filePath: string): Chunk[] 
   let inCodeFence = false;
   let index = 0;
 
-  for (const line of lines) {
+  lines.forEach((line) => {
     // Track code fence boundaries to avoid splitting inside them
     if (/^```/.test(line)) {
       inCodeFence = !inCodeFence;
-      current += line + '\n';
-      continue;
+      current += `${line}\n`;
+    } else {
+      // Split on heading lines only when not inside a code fence
+      if (!inCodeFence && /^#{1,3}\s/.test(line) && current.trim()) {
+        chunks.push(makeChunk(current.trim(), title, filePath, index));
+        index += 1;
+        current = '';
+      }
+      current += `${line}\n`;
     }
-
-    // Split on heading lines only when not inside a code fence
-    if (!inCodeFence && /^#{1,3}\s/.test(line) && current.trim()) {
-      chunks.push(makeChunk(current.trim(), title, filePath, index++));
-      current = '';
-    }
-    current += line + '\n';
-  }
+  });
 
   if (current.trim()) {
     chunks.push(makeChunk(current.trim(), title, filePath, index));
@@ -146,11 +111,38 @@ function structureChunk(text: string, title: string, filePath: string): Chunk[] 
 }
 
 /**
+ * Computes the cosine similarity between two equal-length numeric vectors.
+ * Returns 0 when either vector has zero magnitude.
+ *
+ * Exported for direct testing.
+ * @param a - First vector.
+ * @param b - Second vector.
+ * @returns Cosine similarity in range [0, 1].
+ */
+export function cosineSimilarity(a: number[], b: number[]): number {
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < a.length; i += 1) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  const denom = Math.sqrt(normA) * Math.sqrt(normB);
+  return denom === 0 ? 0 : dot / denom;
+}
+
+/**
  * Semantic chunking using cosine similarity of sentence embeddings.
  * Cosine similarity: sim(a, b) = (a · b) / (‖a‖ · ‖b‖)
  * A new chunk boundary is set when sim < threshold.
  *
- * Requires optional peer @xenova/transformers. Falls back to structure chunking.
+ * Requires optional peer `@xenova/transformers`. Falls back to structure chunking.
+ * @param text - Full page text.
+ * @param title - Page title metadata.
+ * @param filePath - Source file path metadata.
+ * @param threshold - Similarity threshold below which a new chunk starts.
+ * @returns Array of Chunk objects.
  */
 async function semanticChunk(
   text: string,
@@ -160,11 +152,18 @@ async function semanticChunk(
 ): Promise<Chunk[]> {
   try {
     // Use Function constructor to avoid TypeScript static resolution of optional peer dep
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
     const importFn = new Function('n', 'return import(n)') as (n: string) => Promise<unknown>;
     /* v8 ignore start */
     const { pipeline } = (await importFn('@xenova/transformers')) as {
-      pipeline: (task: string, model: string) => Promise<
-        (input: string[], options: { pooling: string; normalize: boolean }) => Promise<{ data: Float32Array }[]>
+      pipeline: (
+        task: string,
+        model: string
+      ) => Promise<
+        (
+          input: string[],
+          options: { pooling: string; normalize: boolean }
+        ) => Promise<{ data: Float32Array }[]>
       >;
     };
     const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
@@ -184,10 +183,11 @@ async function semanticChunk(
     let current = sentences[0];
     let index = 0;
 
-    for (let i = 1; i < sentences.length; i++) {
+    for (let i = 1; i < sentences.length; i += 1) {
       const sim = cosineSimilarity(embeddings[i - 1], embeddings[i]);
       if (sim < threshold) {
-        chunks.push(makeChunk(current.trim(), title, filePath, index++));
+        chunks.push(makeChunk(current.trim(), title, filePath, index));
+        index += 1;
         current = sentences[i];
       } else {
         current += sentences[i];
@@ -203,33 +203,57 @@ async function semanticChunk(
 }
 
 /**
- * Computes the cosine similarity between two equal-length numeric vectors.
- * Returns 0 when either vector has zero magnitude.
- *
- * Exported for direct testing.
+ * Formats a chunk into a human/LLM-readable string with context headers prefixed.
+ * Suitable for inclusion in llms-full.txt or JSONL export.
+ * @param chunk - The chunk to format.
+ * @returns Formatted string with metadata header.
  */
-export function cosineSimilarity(a: number[], b: number[]): number {
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  const denom = Math.sqrt(normA) * Math.sqrt(normB);
-  return denom === 0 ? 0 : dot / denom;
+export function formatChunkWithMetadata(chunk: Chunk): string {
+  return `Document_Title: ${chunk.metadata.title}\nTopic: ${chunk.metadata.topic}\nFile_Path: ${chunk.metadata.filePath}\n\n${chunk.text}`;
 }
 
 /**
- * Formats a chunk array into a human/LLM-readable string with context headers prefixed.
- * Suitable for inclusion in llms-full.txt or JSONL export.
+ * Splits text content into semantic chunks according to the chosen strategy.
+ *
+ * Strategies:
+ *  - 'none'      : Returns a single chunk containing the full text (default).
+ *  - 'fixed'     : Splits at fixed character intervals with configurable overlap.
+ *  - 'recursive' : Splits at natural separators (\n\n → \n → space) with overlap.
+ *  - 'structure' : Splits on Markdown headings (#, ##, ###); keeps code fences intact.
+ *  - 'semantic'  : Groups sentences by cosine similarity of vector embeddings.
+ *                  Requires the optional peer `@xenova/transformers`. Falls back to
+ *                  structure chunking when the package is not installed.
+ *
+ * Each chunk is prefixed with a metadata header so that RAG systems retain context.
+ * @param text - The full page text to split.
+ * @param title - Page title used as metadata.
+ * @param filePath - Source file path used as metadata.
+ * @param options - Chunking configuration.
+ * @returns Array of Chunk objects.
  */
-export function formatChunkWithMetadata(chunk: Chunk): string {
-  return (
-    `Document_Title: ${chunk.metadata.title}\n` +
-    `Topic: ${chunk.metadata.topic}\n` +
-    `File_Path: ${chunk.metadata.filePath}\n\n` +
-    chunk.text
-  );
+export async function chunkContent(
+  text: string,
+  title: string,
+  filePath: string,
+  options: ChunkingOptions = {}
+): Promise<Chunk[]> {
+  const {
+    strategy = 'none',
+    chunkSize = 1500,
+    chunkOverlap = 200,
+    similarityThreshold = 0.5,
+  } = options;
+
+  switch (strategy) {
+    case 'fixed':
+      return fixedChunk(text, title, filePath, chunkSize, chunkOverlap);
+    case 'recursive':
+      return recursiveChunk(text, title, filePath, chunkSize, chunkOverlap);
+    case 'structure':
+      return structureChunk(text, title, filePath);
+    case 'semantic':
+      return semanticChunk(text, title, filePath, similarityThreshold);
+    default:
+      return [makeChunk(text, title, filePath, 0)];
+  }
 }

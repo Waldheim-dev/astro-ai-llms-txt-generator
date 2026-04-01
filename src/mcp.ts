@@ -29,7 +29,6 @@ interface McpManifest {
  *
  * Each manifest registers the local SSE endpoint and, optionally, the
  * llms-full.txt resource for direct context injection.
- *
  * @param projectRoot - Absolute path to the Astro project root.
  * @param options - Manifest generation options.
  */
@@ -63,13 +62,13 @@ export function generateMcpManifests(projectRoot: string, options: McpManifestOp
     path.join(projectRoot, '.mcp.json'),
   ];
 
-  for (const target of targets) {
+  targets.forEach((target) => {
     const dir = path.dirname(target);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(target, manifestJson, { encoding: 'utf8' });
-  }
+  });
 }
 
 /**
@@ -81,8 +80,8 @@ export function generateMcpManifests(projectRoot: string, options: McpManifestOp
  *
  * Designed to be registered as a Vite/Connect middleware:
  *   server.middlewares.use('/__mcp/sse', createMcpSseHandler(getPages))
- *
  * @param getPages - A function that returns the current list of pages.
+ * @returns Connect-compatible request handler function.
  */
 export function createMcpSseHandler(
   getPages: () => PageInfo[]

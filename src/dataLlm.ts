@@ -11,7 +11,6 @@ export interface DataLlmEntry {
  *
  * Usage in Astro templates:
  *   <div data-llm='{"type":"pricing","product":"Pro","monthly_cost":29}'>…</div>
- *
  * @param html - Raw HTML string.
  * @returns Array of extracted data-llm entries.
  */
@@ -39,7 +38,6 @@ export function extractDataLlmAttributes(html: string): DataLlmEntry[] {
 /**
  * Formats extracted data-llm entries as LLM-readable metadata blocks
  * to be appended to the full-content section of a page.
- *
  * @param entries - Parsed data-llm entries.
  * @returns A markdown string with structured metadata comments, or empty string.
  */
@@ -48,5 +46,5 @@ export function formatDataLlmForLlm(entries: DataLlmEntry[]): string {
   const lines = entries.map(
     (e) => `<!-- LLM Metadata [${e.elementType}]: ${JSON.stringify(e.data)} -->`
   );
-  return '\n\n' + lines.join('\n');
+  return `\n\n${lines.join('\n')}`;
 }

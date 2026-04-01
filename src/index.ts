@@ -113,19 +113,17 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         // 6. Chunked export (optional)
         const chunkStrategy = options.chunking?.strategy;
         if (chunkStrategy && chunkStrategy !== 'none' && options.chunkExport === 'jsonl') {
-          const allChunks: string[] = [];
-          for (const page of validPages) {
-            if (!page.fullContent) continue;
-            const chunks = await chunkContent(
-              page.fullContent,
-              page.title,
-              page.relUrl,
-              options.chunking
+          const pagesWithContent = validPages.filter((p) => p.fullContent);
+          const chunkArrays = await Promise.all(
+            pagesWithContent.map((page) =>
+              chunkContent(page.fullContent!, page.title, page.relUrl, options.chunking)
+            )
+          );
+          const allChunks = chunkArrays
+            .flat()
+            .map((chunk) =>
+              JSON.stringify({ ...chunk, formatted: formatChunkWithMetadata(chunk) })
             );
-            for (const chunk of chunks) {
-              allChunks.push(JSON.stringify({ ...chunk, formatted: formatChunkWithMetadata(chunk) }));
-            }
-          }
           if (allChunks.length > 0) {
             const jsonlPath = path.join(distPath, 'llms-chunks.jsonl');
             fs.writeFileSync(jsonlPath, allChunks.join('\n'), { encoding: 'utf8' });
@@ -142,9 +140,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
               serverPath: mcpOpts.serverPath,
               llmsFullPath: options.llmsFull ? 'llms-full.txt' : undefined,
             });
-            logger.info(
-              'Generated MCP manifests (.cursor/mcp.json, .vscode/mcp.json, .mcp.json)'
-            );
+            logger.info('Generated MCP manifests (.cursor/mcp.json, .vscode/mcp.json, .mcp.json)');
           }
         }
       },

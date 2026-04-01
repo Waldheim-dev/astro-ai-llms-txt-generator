@@ -36,7 +36,6 @@ export interface DataStore {
  *
  * The `isOptional` flag is driven by `entry.data.llmsOptional === true` in the
  * content collection schema (e.g. `llmsOptional: z.boolean().optional()`).
- *
  * @param store - The Astro 5.0 DataStore instance.
  * @param options - Plugin options (site URL, etc.).
  * @returns Array of PageInfo objects ready for formatting.
@@ -46,7 +45,7 @@ export function fetchFromDataStore(store: DataStore, options: LlmsTxtOptions): P
   const baseUrl = site.replace(/\/$/, '');
   const pages: PageInfo[] = [];
 
-  for (const entry of store.values()) {
+  Array.from(store.values()).forEach((entry) => {
     const slug = entry.id.replace(/\\/g, '/');
     const relUrl = slug.startsWith('/') ? slug : `/${slug}`;
     const fullUrl = baseUrl + relUrl;
@@ -54,9 +53,9 @@ export function fetchFromDataStore(store: DataStore, options: LlmsTxtOptions): P
     // Prefer raw Markdown body; fall back to rendered HTML
     const content = entry.body ?? entry.rendered?.html ?? '';
 
-    const title = typeof entry.data['title'] === 'string' ? entry.data['title'] : slug;
-    const summary = typeof entry.data['description'] === 'string' ? entry.data['description'] : '';
-    const isOptional = entry.data['llmsOptional'] === true;
+    const title = typeof entry.data.title === 'string' ? entry.data.title : slug;
+    const summary = typeof entry.data.description === 'string' ? entry.data.description : '';
+    const isOptional = entry.data.llmsOptional === true;
 
     pages.push({
       url: fullUrl,
@@ -66,7 +65,7 @@ export function fetchFromDataStore(store: DataStore, options: LlmsTxtOptions): P
       fullContent: content,
       isOptional,
     });
-  }
+  });
 
   return pages;
 }

@@ -10,10 +10,12 @@ interface GeoLogger {
  * Rules:
  *  - fullContent word count must not exceed 400 words.
  *  - Code fences must have a language tag (``` ts, ```javascript, etc.).
+ * @param pages - The list of PageInfo objects to lint (must include fullContent).
+ * @param logger - Logger for emitting warnings.
  */
 export function lintGEO(pages: PageInfo[], logger: GeoLogger): void {
   for (const page of pages) {
-    if (!page.fullContent) continue;
+    if (!page.fullContent) return;
 
     const content = page.fullContent;
 

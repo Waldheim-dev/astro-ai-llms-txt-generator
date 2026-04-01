@@ -12,6 +12,15 @@ export interface PageInfo {
   dataLlmMetadata?: string;
 }
 
+function escapeXml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 /**
  * Generates the Markdown content for llms.txt and optionally llms-full.txt.
  * Spec-compliant structure:
@@ -21,7 +30,6 @@ export interface PageInfo {
  *   - [Title](url): summary
  *   ## Optional
  *   - [Title](url): summary   ← pages with isOptional: true
- *
  * @param pages - The list of processed pages.
  * @param options - The plugin configuration options.
  * @returns An object containing the generated content.
@@ -73,11 +81,12 @@ export function generateLlmsTxtContent(
       : info.fullContent;
 
     if (llmsFullFormat === 'xml') {
-      fullContent += `  <document index="${xmlDocIndex++}">\n`;
+      fullContent += `  <document index="${xmlDocIndex}">\n`;
       fullContent += `    <title>${escapeXml(info.title)}</title>\n`;
       fullContent += `    <source>${escapeXml(info.url)}</source>\n`;
       fullContent += `    <content>\n${body}\n    </content>\n`;
       fullContent += `  </document>\n`;
+      xmlDocIndex += 1;
     } else {
       fullContent += `## ${info.title}\n\nURL: ${info.url}\n\n${body}\n\n---\n\n`;
     }
@@ -111,13 +120,4 @@ export function generateLlmsTxtContent(
   }
 
   return { short: shortContent, full: fullContent };
-}
-
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }

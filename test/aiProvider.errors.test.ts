@@ -10,7 +10,7 @@ import {
   getCLISummary,
   getOllamaSummary,
   generateAISummary,
-  _resetProviderFailures,
+  resetProviderFailures,
 } from '../src/aiProvider';
 
 // Shared mock reference so individual tests can override it with mockRejectedValueOnce
@@ -71,7 +71,7 @@ describe('aiProvider error paths', () => {
   };
 
   beforeEach(() => {
-    _resetProviderFailures();
+    resetProviderFailures();
     vi.clearAllMocks();
   });
 

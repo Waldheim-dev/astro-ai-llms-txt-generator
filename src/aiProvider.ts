@@ -13,12 +13,16 @@ import { execSync } from 'node:child_process';
  */
 const permanentlyFailedProviders = new Set<string>();
 
-/** @internal — exported only for test resets between test cases */
-export function _resetProviderFailures(): void {
+/** Exported only for test resets between test cases. */
+export function resetProviderFailures(): void {
   permanentlyFailedProviders.clear();
 }
 
-/** Returns true if the error message indicates a permanent failure (e.g. invalid API key). */
+/**
+ * Returns true if the error message indicates a permanent failure (e.g. invalid API key).
+ * @param message - The error message to check.
+ * @returns True when the failure is non-retryable.
+ */
 function isPermanentFailure(message: string): boolean {
   const lower = message.toLowerCase();
   return (
@@ -33,6 +37,10 @@ function isPermanentFailure(message: string): boolean {
 
 /** Signals a permanent, non-retryable provider failure. */
 class PermanentProviderError extends Error {
+  /**
+   * @param message - Error description.
+   * @param providerName - Name of the provider that failed.
+   */
   constructor(
     message: string,
     public readonly providerName: string
@@ -397,7 +405,9 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
           return cached.summary;
         }
       } catch (e) {
-        wrappedLogger.warn(`Error reading AI cache: ${e instanceof Error ? e.message : /* v8 ignore next */ String(e)}`);
+        wrappedLogger.warn(
+          `Error reading AI cache: ${e instanceof Error ? e.message : /* v8 ignore next */ String(e)}`
+        );
       }
     }
     return null;
@@ -473,7 +483,9 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
       fs.writeFileSync(cachePath, JSON.stringify({ summary }), 'utf-8');
       wrappedLogger.debug(`AI response cached at ${cachePath}`);
     } catch (e) {
-      wrappedLogger.warn(`Error writing AI cache: ${e instanceof Error ? e.message : /* v8 ignore next */ String(e)}`);
+      wrappedLogger.warn(
+        `Error writing AI cache: ${e instanceof Error ? e.message : /* v8 ignore next */ String(e)}`
+      );
     }
   }
   return summary;

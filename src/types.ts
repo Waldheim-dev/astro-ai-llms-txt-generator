@@ -1,5 +1,5 @@
 export interface ChunkingOptions {
-  /** Chunking strategy (default: 'none'). 'semantic' requires optional peer @xenova/transformers. */
+  /** Chunking strategy (default: 'none'). 'semantic' requires optional peer `@xenova/transformers`. */
   strategy?: 'none' | 'fixed' | 'recursive' | 'structure' | 'semantic';
   /** Target chunk size in characters for fixed/recursive strategies (default: 1500). */
   chunkSize?: number;
