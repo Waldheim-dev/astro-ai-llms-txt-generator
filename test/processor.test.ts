@@ -110,4 +110,25 @@ describe('processor', () => {
     delete process.env.OPENAI_API_KEY;
     delete process.env.ANTHROPIC_API_KEY;
   });
+
+  it('uses h2/h3 prompt when page has no title or h1', async () => {
+    const { generateAISummary } = await import('../src/aiProvider');
+    (fs.readFileSync as any).mockReturnValue(
+      '<html><body><h2>Section</h2><h3>Sub</h3></body></html>'
+    );
+    await processAllFiles(['/dist/no-title.html'], '/dist', options, logger, '/cache');
+    expect(generateAISummary).toHaveBeenCalledWith(
+      expect.objectContaining({ prompt: expect.any(String) })
+    );
+  });
+
+  it('logs error when generateAISummary throws', async () => {
+    const { generateAISummary } = await import('../src/aiProvider');
+    (generateAISummary as any).mockRejectedValueOnce(new Error('AI failure'));
+    (fs.readFileSync as any).mockReturnValue('<html><title>Test</title></html>');
+    const result = await processAllFiles(['/dist/test.html'], '/dist', options, logger, '/cache');
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('AI failure'));
+    // Page still returns with empty summary fallback
+    expect(result).toHaveLength(0);
+  });
 });

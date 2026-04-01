@@ -11,6 +11,8 @@ import {
 import { extractAllTagsText, extractMetaContent, extractTagText } from './extractHtml.js';
 import { AISummaryOptions, generateAISummary } from './aiProvider.js';
 import type { PageInfo } from './formatter.js';
+import { extractDataLlmAttributes, formatDataLlmForLlm } from './dataLlm.js';
+import { lintGEO } from './geo-linter.js';
 
 export interface ProcessorLogger {
   error: (...args: unknown[]) => void;
@@ -61,6 +63,13 @@ async function processFile(
     const title = extractTagText(html, 'title');
     const metaDescription = extractMetaContent(html, 'description');
     const h1 = extractTagText(html, 'h1');
+
+    // Check if page is marked as optional for the llms.txt spec
+    const isOptional = extractMetaContent(html, 'llms-optional') === 'true';
+
+    // data-llm attribute extraction for semantic metadata
+    const dataLlmEntries = extractDataLlmAttributes(html);
+    const dataLlmMetadata = formatDataLlmForLlm(dataLlmEntries);
 
     // Content extraction
     const h2s = extractAllTagsText(html, 'h2').join('\n');
@@ -126,6 +135,8 @@ async function processFile(
       summary: summary.trim(),
       relUrl,
       fullContent: kiInput,
+      isOptional,
+      dataLlmMetadata: dataLlmMetadata || undefined,
     };
   } catch (e) {
     logger.error(`Failed to process ${file}: ${e instanceof Error ? e.message : String(e)}`);
@@ -155,5 +166,14 @@ export async function processAllFiles(
     files.map((file) => limit(() => processFile(file, resolvedDistPath, options, logger, cacheDir)))
   );
 
-  return results.filter((info): info is PageInfo => info !== null && info.summary.length > 0);
+  const validPages = results.filter(
+    (info): info is PageInfo => info !== null && info.summary.length > 0
+  );
+
+  // GEO linter runs after all pages have been collected (enabled by default)
+  if (options.geoLinter !== false && validPages.length > 0) {
+    lintGEO(validPages, logger);
+  }
+
+  return validPages;
 }

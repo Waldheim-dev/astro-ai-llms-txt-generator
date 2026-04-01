@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractHtmlContent } from '../src/extractHtml';
+import { extractHtmlContent, extractTagContent } from '../src/extractHtml';
 
 describe('extractContentFromHtml', () => {
   const html = `
@@ -37,5 +37,34 @@ describe('extractContentFromHtml', () => {
     expect(result.headings).toEqual([]);
     expect(result.paragraphs).toEqual([]);
     expect(result.section).toBe('foo');
+  });
+});
+
+describe('extractTagContent', () => {
+  it('returns trimmed inner HTML when tag is found', () => {
+    const html = '<html><body><div>  <strong>hello</strong>  </div></body></html>';
+    const result = extractTagContent(html, 'div');
+    expect(result).toBe('<strong>hello</strong>');
+  });
+
+  it('returns empty string when tag is not found', () => {
+    const html = '<html><body></body></html>';
+    const result = extractTagContent(html, 'article');
+    expect(result).toBe('');
+  });
+
+  it('returns empty string when tag is present but has no inner HTML', () => {
+    const html = '<html><body><div></div></body></html>';
+    const result = extractTagContent(html, 'div');
+    expect(result).toBe('');
+  });
+});
+
+describe('extractHtmlContent section matching', () => {
+  it('returns empty section when URL has no sub-path segment', () => {
+    const html = '<html><head><title>About</title></head><body></body></html>';
+    const result = extractHtmlContent(html, '/about');
+    expect(result.section).toBe('');
+    expect(result.title).toBe('About');
   });
 });

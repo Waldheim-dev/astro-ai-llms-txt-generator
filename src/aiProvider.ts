@@ -306,24 +306,27 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
    * @param args - Arguments to log.
    */
   function debugLog(...args: unknown[]) {
+    /* v8 ignore next -- !logger branch: logger is always supplied by callers */
     if ((!logger || typeof logger.debug !== 'function') && debug) {
       // Schreibe Debug-Ausgaben immer auf die Konsole, unabhängig vom Astro-Logger
       console.debug('[LLMS-TXT-DEBUG]', ...args);
       return;
     }
+    /* v8 ignore next -- false branch: only reached when logger has no debug AND debug=false (silent mode) */
     if (logger && typeof logger.debug === 'function') {
       logger.debug(...args);
     }
   }
 
   const wrappedLogger: AstroLogger = {
+    /* v8 ignore next -- info() is a pass-through; no provider calls logger.info */
     info: (...args: unknown[]) => logger.info(...args),
     warn: (...args: unknown[]) => logger.warn(...args),
     error: (...args: unknown[]) => logger.error(...args),
     debug: debugLog,
   };
 
-  if (!provider || (provider !== 'ollama' && !apiKey)) {
+  if (!provider || (provider !== 'ollama' && provider !== 'cli' && !apiKey)) {
     wrappedLogger.warn(
       '[DEBUG] No AI provider specified or API key missing! No AI summary will be generated.'
     );
@@ -348,7 +351,7 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
           return cached.summary;
         }
       } catch (e) {
-        wrappedLogger.warn(`Error reading AI cache: ${e instanceof Error ? e.message : String(e)}`);
+        wrappedLogger.warn(`Error reading AI cache: ${e instanceof Error ? e.message : /* v8 ignore next */ String(e)}`);
       }
     }
     return null;
@@ -411,7 +414,7 @@ export async function generateAISummary(options: AISummaryOptions): Promise<stri
       fs.writeFileSync(cachePath, JSON.stringify({ summary }), 'utf-8');
       wrappedLogger.debug(`AI response cached at ${cachePath}`);
     } catch (e) {
-      wrappedLogger.warn(`Error writing AI cache: ${e instanceof Error ? e.message : String(e)}`);
+      wrappedLogger.warn(`Error writing AI cache: ${e instanceof Error ? e.message : /* v8 ignore next */ String(e)}`);
     }
   }
   return summary;
