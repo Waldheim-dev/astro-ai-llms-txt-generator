@@ -1,6 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import llmsTxt from '../src/index.ts'; // Adjusted import to include file extension
+import llmsTxt from '../src/index.ts';
 
 // https://astro.build/config
 export default defineConfig({
@@ -14,6 +14,11 @@ export default defineConfig({
       llmsFull: true,
       maxInputLength: 8000, // Optional: max length for AI input
       debug: true, // Optional: enable debug mode for detailed logs
+      
+      // --- New v1.3 Features ---
+      mcp: true, // Auto-generate Model Context Protocol integration and serve SSE endpoint
+      llmsFullFormat: 'xml', // Format llms-full.txt as XML for Anthropic compatibility
+      contentSource: 'auto', // Support pulling from Astro 5 DataStore or HTML files
     }),
   ],
 });

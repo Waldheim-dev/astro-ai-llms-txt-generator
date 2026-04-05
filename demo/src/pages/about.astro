@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout>
+  <head>
+    <!-- Mark this page as optional in llms.txt (v1.3 feature) -->
+    <meta name="llms-optional" content="true">
+  </head>
+  <body>
+    <h1>About Us</h1>
+    <!-- Define structured metadata to extract as LLM comments (v1.3 feature) -->
+    <div data-llm='{"context": "Describes our team", "priority": "low"}'>
+      <p>We are building amazing Astro integrations!</p>
+    </div>
+  </body>
+</Layout>
