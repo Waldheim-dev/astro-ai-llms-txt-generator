@@ -1,3 +1,15 @@
+# [1.4.0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.3.0...v1.4.0) (2026-08-28)
+
+
+### Bug Fixes
+
+* keep llms.txt output spec compliant ([ff129dc](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/ff129dc15e9ff7349519a5a48f2d8f50609b139d))
+
+
+### Features
+
+* support Astro 7 and improve build stability ([e252a53](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/e252a53a4092c3f8e8f88ea7a948fcbaacb306aa))
+
 # [1.3.0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.2.3...v1.3.0) (2026-04-01)
 
 
