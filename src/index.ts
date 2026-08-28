@@ -8,6 +8,7 @@ import { processAllFiles, type ProcessorLogger } from './processor.js';
 import { chunkContent, formatChunkWithMetadata } from './chunker.js';
 import { generateMcpManifests, createMcpSseHandler } from './mcp.js';
 import type { PageInfo } from './formatter.js';
+import { resetProviderFailures } from './aiProvider.js';
 
 interface AstroLogger {
   info: (...args: unknown[]) => void;
@@ -61,6 +62,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
       },
 
       'astro:build:done': async ({ dir, logger }: { dir: URL; logger: AstroLogger }) => {
+        resetProviderFailures();
         const distPath = fileURLToPath(dir);
         const resolvedDistPath = path.resolve(distPath);
 

@@ -7,9 +7,13 @@ export interface ExtractedContent {
   url: string;
   title?: string;
   description?: string;
+  h1?: string;
+  h2: string[];
+  h3: string[];
   headings: string[];
   paragraphs: string[];
   section?: string;
+  isOptional?: boolean;
 }
 
 /**
@@ -59,21 +63,22 @@ export function extractMetaContent(html: string, name: string): string {
 export function extractHtmlContent(html: string, url: string): ExtractedContent {
   const $ = cheerio.load(html);
   const title = $('title').first().text().trim();
-  const description = extractMetaContent(html, 'description');
-  const headings = [
-    ...$('h1')
-      .map((_, el) => $(el).text().trim())
-      .get(),
-    ...$('h2')
-      .map((_, el) => $(el).text().trim())
-      .get(),
-    ...$('h3')
-      .map((_, el) => $(el).text().trim())
-      .get(),
-  ];
+  const description = $('meta[name="description"]').attr('content')?.trim() ?? '';
+  const h1 = $('h1').first().text().trim();
+  const h2 = $('h2')
+    .map((_, el) => $(el).text().trim())
+    .get()
+    .filter(Boolean);
+  const h3 = $('h3')
+    .map((_, el) => $(el).text().trim())
+    .get()
+    .filter(Boolean);
+  const headings = [h1, ...h2, ...h3].filter(Boolean);
   const paragraphs = $('p')
     .map((_, el) => $(el).text().trim())
-    .get();
+    .get()
+    .filter(Boolean);
+  const isOptional = $('meta[name="llms-optional"]').attr('content')?.trim() === 'true';
   // Section from URL (e.g. /blog/)
   const sectionMatch = /^\/([^/]+)\//.exec(url);
   const section = sectionMatch ? sectionMatch[1] : '';
@@ -81,9 +86,13 @@ export function extractHtmlContent(html: string, url: string): ExtractedContent 
     url,
     title,
     description,
+    h1,
+    h2,
+    h3,
     headings,
     paragraphs,
     section,
+    isOptional,
   };
 }
 
