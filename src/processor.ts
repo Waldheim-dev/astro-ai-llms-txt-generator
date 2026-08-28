@@ -8,7 +8,7 @@ import {
   getFileListPrompt,
   getFullLlmsTxtPrompt,
 } from './prompt.js';
-import { extractAllTagsText, extractMetaContent, extractTagText } from './extractHtml.js';
+import { extractHtmlContent } from './extractHtml.js';
 import { AISummaryOptions, generateAISummary } from './aiProvider.js';
 import type { PageInfo } from './formatter.js';
 import { extractDataLlmAttributes, formatDataLlmForLlm } from './dataLlm.js';
@@ -60,21 +60,17 @@ async function processFile(
     relUrl = relUrl.replace(/\/+/g, '/');
     const fullUrl = baseUrl + relUrl;
 
-    const title = extractTagText(html, 'title');
-    const metaDescription = extractMetaContent(html, 'description');
-    const h1 = extractTagText(html, 'h1');
-
-    // Check if page is marked as optional for the llms.txt spec
-    const isOptional = extractMetaContent(html, 'llms-optional') === 'true';
+    const extracted = extractHtmlContent(html, relUrl);
+    const { title, description: metaDescription, h1, h2, h3, paragraphs, isOptional } = extracted;
 
     // data-llm attribute extraction for semantic metadata
     const dataLlmEntries = extractDataLlmAttributes(html);
     const dataLlmMetadata = formatDataLlmForLlm(dataLlmEntries);
 
     // Content extraction
-    const h2s = extractAllTagsText(html, 'h2').join('\n');
-    const h3s = extractAllTagsText(html, 'h3').join('\n');
-    const allPs = extractAllTagsText(html, 'p').join(' ');
+    const h2s = h2.join('\n');
+    const h3s = h3.join('\n');
+    const allPs = paragraphs.join(' ');
 
     const kiInput = [title, h1, h2s, h3s, allPs].filter(Boolean).join('\n');
     const kiInputShort =
@@ -160,7 +156,11 @@ export async function processAllFiles(
   logger: ProcessorLogger,
   cacheDir: string
 ): Promise<PageInfo[]> {
-  const limit = pLimit(options.concurrency || 5);
+  const concurrency =
+    typeof options.concurrency === 'number' && Number.isFinite(options.concurrency)
+      ? Math.max(1, Math.floor(options.concurrency))
+      : 5;
+  const limit = pLimit(concurrency);
 
   const results = await Promise.all(
     files.map((file) => limit(() => processFile(file, resolvedDistPath, options, logger, cacheDir)))

@@ -131,4 +131,13 @@ describe('processor', () => {
     // Page still returns with empty summary fallback
     expect(result).toHaveLength(0);
   });
+
+  it('normalizes invalid concurrency to a safe minimum', async () => {
+    const { generateAISummary } = await import('../src/aiProvider');
+    (fs.readFileSync as any).mockReturnValue('<html><title>Test</title></html>');
+    await expect(
+      processAllFiles(['/dist/test.html'], '/dist', { ...options, concurrency: 0 }, logger, '/cache')
+    ).resolves.toHaveLength(1);
+    expect(generateAISummary).toHaveBeenCalled();
+  });
 });

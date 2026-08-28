@@ -21,6 +21,10 @@ function escapeXml(text: string): string {
     .replace(/'/g, '&apos;');
 }
 
+function normalizeInlineMarkdown(text: string): string {
+  return text.replace(/\\/g, '\\\\').replace(/\]/g, '\\]').replace(/\r?\n/g, ' ').trim();
+}
+
 /**
  * Generates the Markdown content for llms.txt and optionally llms-full.txt.
  * Spec-compliant structure:
@@ -60,8 +64,10 @@ export function generateLlmsTxtContent(
   });
 
   // Generate llms.txt — spec-compliant header
-  let shortContent = `# ${projectName}\n\n`;
-  shortContent += `> ${description}\n\n`;
+  const safeProjectName = normalizeInlineMarkdown(projectName);
+  const safeDescription = normalizeInlineMarkdown(description);
+  let shortContent = `# ${safeProjectName}\n\n`;
+  shortContent += `> ${safeDescription}\n\n`;
 
   // Generate llms-full.txt header (if requested)
   let fullContent: string | undefined;
@@ -98,7 +104,7 @@ export function generateLlmsTxtContent(
     const entries = sectionMap.get(section)!;
     shortContent += `## ${section.charAt(0).toUpperCase() + section.slice(1)}\n\n`;
     entries.forEach((info) => {
-      shortContent += `- [${info.title}](${info.url}): ${info.summary}\n`;
+      shortContent += `- [${normalizeInlineMarkdown(info.title)}](${info.url}): ${normalizeInlineMarkdown(info.summary)}\n`;
       appendFull(info);
     });
     shortContent += '\n';
@@ -108,7 +114,7 @@ export function generateLlmsTxtContent(
   if (optionalPages.length > 0) {
     shortContent += `## Optional\n\n`;
     optionalPages.forEach((info) => {
-      shortContent += `- [${info.title}](${info.url}): ${info.summary}\n`;
+      shortContent += `- [${normalizeInlineMarkdown(info.title)}](${info.url}): ${normalizeInlineMarkdown(info.summary)}\n`;
       appendFull(info);
     });
     shortContent += '\n';

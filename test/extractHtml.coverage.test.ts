@@ -7,6 +7,7 @@ describe('extractContentFromHtml', () => {
       <head>
         <title>Test Title</title>
         <meta name="description" content="Test Description">
+        <meta name="llms-optional" content="true">
       </head>
       <body>
         <h1>Headline</h1>
@@ -23,6 +24,10 @@ describe('extractContentFromHtml', () => {
     const result = extractHtmlContent(html, url);
     expect(result.title).toBe('Test Title');
     expect(result.description).toBe('Test Description');
+    expect(result.h1).toBe('Headline');
+    expect(result.h2).toEqual(['Section']);
+    expect(result.h3).toEqual(['Subsection']);
+    expect(result.isOptional).toBe(true);
     expect(result.headings).toEqual(['Headline', 'Section', 'Subsection']);
     expect(result.paragraphs).toEqual(['First paragraph.', 'Second paragraph.']);
     expect(result.section).toBe('blog');
@@ -34,6 +39,10 @@ describe('extractContentFromHtml', () => {
     const result = extractHtmlContent(emptyHtml, '/foo/bar.html');
     expect(result.title).toBe('');
     expect(result.description).toBe('');
+    expect(result.h1).toBe('');
+    expect(result.h2).toEqual([]);
+    expect(result.h3).toEqual([]);
+    expect(result.isOptional).toBe(false);
     expect(result.headings).toEqual([]);
     expect(result.paragraphs).toEqual([]);
     expect(result.section).toBe('foo');

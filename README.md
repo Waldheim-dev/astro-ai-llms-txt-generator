@@ -22,12 +22,12 @@ Follows the [llms.txt](https://llmstxt.org/) standard.
 - 🔪 **Chunking Pipeline**: Split full-content output into fixed, recursive, structure-aware, or semantic chunks — exportable as JSONL.
 - 🔌 **MCP Integration**: Auto-generate `.cursor/mcp.json`, `.vscode/mcp.json`, and `.mcp.json` at build time, and serve a live Model Context Protocol SSE endpoint during `astro dev`.
 - 🏷️ **`data-llm` Metadata**: Embed structured JSON metadata on any HTML element for LLM consumption.
-- 🛠️ **Robust & Fast**: Optimized for Astro 5+ and Node 24+.
+- 🛠️ **Robust & Fast**: Optimized for Astro 5+, including Astro 7, and Node 24+.
 
 ## 📋 Requirements
 
 - **Node.js**: 24.x or higher
-- **Astro**: 5.0.0 or higher, including Astro 6.x
+- **Astro**: 5.0.0 or higher, including Astro 6.x and 7.x
 
 ## 📦 Installation
 
