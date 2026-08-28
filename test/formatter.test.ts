@@ -181,5 +181,20 @@ describe('formatter', () => {
     expect(short).toContain('## General');
     expect(short).toContain('About');
   });
-});
 
+  it('keeps dynamic metadata safe in Markdown link lists', () => {
+    const page: PageInfo = {
+      url: 'https://example.com/safe',
+      title: 'A ] title',
+      summary: 'A summary\nwith a new line',
+      relUrl: '/safe',
+    };
+    const { short } = generateLlmsTxtContent([page], {
+      projectName: 'Project\nName',
+      description: 'Description\ntext',
+    });
+    expect(short).toContain('# Project Name');
+    expect(short).toContain('> Description text');
+    expect(short).toContain('- [A \\] title](https://example.com/safe): A summary with a new line');
+  });
+});

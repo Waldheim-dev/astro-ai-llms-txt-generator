@@ -38,6 +38,12 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
   let projectRoot = process.cwd();
   const cachedPages: PageInfo[] = [];
 
+  function writeLlmsTxt(distPath: string, content: string, logger: AstroLogger): void {
+    const outPath = path.join(distPath, 'llms.txt');
+    fs.writeFileSync(outPath, content, { encoding: 'utf8' });
+    logger.info(`Generated llms.txt at ${outPath}`);
+  }
+
   return {
     name: 'llms-txt',
     hooks: {
@@ -71,6 +77,8 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
 
         if (!htmlFiles.length) {
           logger.warn('No HTML files found. Skipping llms.txt generation.');
+          const { short } = generateLlmsTxtContent([], options);
+          writeLlmsTxt(distPath, short, logger);
           return;
         }
 
@@ -91,8 +99,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         );
 
         if (!validPages.length) {
-          logger.warn('No valid summaries generated. llms.txt will be empty or not generated.');
-          return;
+          logger.warn('No valid summaries generated. Writing an empty llms.txt header.');
         }
 
         // Cache pages for the MCP SSE server (used in dev mode)
@@ -102,9 +109,7 @@ export default function llmsTxt(options: LlmsTxtOptions = {}) {
         const { short, full } = generateLlmsTxtContent(validPages, options);
 
         // 5. Write Files
-        const outPath = path.join(distPath, 'llms.txt');
-        fs.writeFileSync(outPath, short, { encoding: 'utf8' });
-        logger.info(`Generated llms.txt at ${outPath}`);
+        writeLlmsTxt(distPath, short, logger);
 
         if (full && options.llmsFull) {
           const fullOutPath = path.join(distPath, 'llms-full.txt');

@@ -154,13 +154,17 @@ describe('llmsTxt plugin', () => {
       expect(fs.mkdirSync).not.toHaveBeenCalled();
     });
 
-    it('warns and returns early when no valid pages are generated', async () => {
+    it('writes a valid header when no valid pages are generated', async () => {
       const { default: llmsTxt } = await import('../src/index');
       (processAllFiles as ReturnType<typeof vi.fn>).mockResolvedValue([]);
       const integration = llmsTxt();
       await integration.hooks['astro:build:done']({ dir: DIR, logger });
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('No valid summaries'));
-      expect(generateLlmsTxtContent).not.toHaveBeenCalled();
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        expect.stringContaining('llms.txt'),
+        'SHORT',
+        { encoding: 'utf8' }
+      );
     });
 
     it('writes llms.txt and logs success', async () => {
@@ -273,4 +277,3 @@ describe('llmsTxt plugin', () => {
     });
   });
 });
-
