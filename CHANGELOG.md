@@ -1,3 +1,16 @@
+# [1.5.0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.4.0...v1.5.0) (2026-10-15)
+
+
+### Bug Fixes
+
+* **ci:** remove duplicate --run flag in test workflow step ([25226a8](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/25226a8b3b9f16eb7d8513b46e52c74673b0ccdd))
+* **ci:** use valid aquasecurity/trivy-action@v0.36.0 tag and trivy-config ([e92d980](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/e92d9802c06b07e73d9d7744f33880e4fa333dc6))
+
+
+### Features
+
+* expand AI providers, fix build/linter bugs, integrate Trivy, and reach 100% test coverage ([ca0808c](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/commit/ca0808c317d6e7f34b346a9e8d689f075127034d))
+
 # [1.4.0](https://github.com/Waldheim-dev/astro-ai-llms-txt-generator/compare/v1.3.0...v1.4.0) (2026-08-28)
 
 
